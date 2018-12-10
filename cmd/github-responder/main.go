@@ -7,17 +7,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
 
-	"github.com/hairyhenderson/github-responder/autotls"
-	"github.com/pkg/errors"
-
 	"github.com/hairyhenderson/github-responder"
+	"github.com/hairyhenderson/github-responder/autotls"
 	"github.com/hairyhenderson/github-responder/version"
+
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +33,11 @@ const (
 	githubTokenName = "GITHUB_TOKEN"
 )
 
-func validateOpts(cmd *cobra.Command, args []string) error {
+func preRun(cmd *cobra.Command, args []string) error {
+	if verbose {
+		setVerboseLogging()
+	}
+
 	if repo == "" {
 		return errors.New("must provide repo")
 	}
@@ -84,35 +88,35 @@ func newCmd() *cobra.Command {
 		Example: `  Run ./handle_event.sh every time a webhook event is received:
 
   $ github-responder -a -d example.com -e me@example.com ./handle_event.sh`,
-		PreRunE: validateOpts,
+		PreRunE: preRun,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if printVer {
 				printVersion(cmd.Name())
 				return nil
 			}
-			if verbose {
-				// nolint: errcheck
-				fmt.Fprintf(os.Stderr, "%s version %s, build %s (%v)\n\n",
-					cmd.Name(), version.Version, version.GitCommit, version.BuildDate)
-			}
+			log.Debug().
+				Str("version", version.Version).
+				Str("commit", version.GitCommit).
+				Str("built", version.BuildDate).
+				Msg("github-responder")
 			cmd.SilenceErrors = true
 			cmd.SilenceUsage = true
 
-			var action responder.ActionFunc
+			var action func(string, string, []byte)
 			if len(args) > 0 {
 				action = execArgs(args...)
 			} else {
-				logf("No action command given, will perform default")
+				log.Info().Msg("No action command given, will perform default")
 				action = defaultAction
 			}
 
 			ctx := context.Background()
-			logf("Starting responder with options %#v", opts)
+			log.Printf("Starting responder with options %#v", opts)
 			cleanup, err := responder.Start(ctx, opts, action)
 			if err != nil {
 				return err
 			}
-			logf("Responder started...")
+			log.Print("Responder started...")
 			defer cleanup()
 
 			c := make(chan os.Signal, 1)
@@ -120,21 +124,20 @@ func newCmd() *cobra.Command {
 
 			select {
 			case s := <-c:
-				logf("received %v, shutting down gracefully...", s)
+				log.Debug().
+					Str("signal", s.String()).
+					Msg(fmt.Sprintf("received %v, shutting down gracefully...", s))
 			case <-ctx.Done():
 				err = ctx.Err()
+				log.Error().
+					Err(err).
+					Msg("context cancelled")
 			}
 			return err
 		},
 		Args: cobra.ArbitraryArgs,
 	}
 	return rootCmd
-}
-
-func logf(format string, v ...interface{}) {
-	if verbose {
-		log.Printf(format, v...)
-	}
 }
 
 func initFlags(command *cobra.Command) {
@@ -159,11 +162,12 @@ func initFlags(command *cobra.Command) {
 }
 
 func main() {
+	initLogger()
+
 	command := newCmd()
 	initFlags(command)
 	if err := command.Execute(); err != nil {
-		// nolint: errcheck
-		fmt.Fprintln(os.Stderr, err)
+		log.Error().Err(err).Msg(command.Name() + " failed")
 		os.Exit(1)
 	}
 }

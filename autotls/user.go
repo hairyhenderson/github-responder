@@ -10,11 +10,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/xenolf/lego/acme"
 )
 

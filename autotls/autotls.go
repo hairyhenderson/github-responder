@@ -2,12 +2,12 @@ package autotls
 
 import (
 	"context"
-	"log"
 	"net/url"
 	"path/filepath"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -128,10 +128,17 @@ func (t *AutoTLS) Start(ctx context.Context) error {
 			return errors.Wrapf(err, "failed to create cert for %s", t.Domain)
 		}
 	}
-	log.Printf("loaded cert for %s - expires %v", t.Domain, c.expiration())
+	log.Debug().
+		Str("domain", t.Domain).
+		Time("expiration", c.expiration()).
+		Msg("loaded cert")
 
 	// check right away so we start with a fresh cert
 	if c.needsRenewal() {
+		log.Debug().
+			Str("domain", t.Domain).
+			Time("expiration", c.expiration()).
+			Msg("cert needs immediate renewal")
 		err = c.renew(client)
 		if err != nil {
 			return errors.Wrap(err, "failed to renew cert")
