@@ -4,24 +4,28 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
-	"github.com/dustin/go-humanize"
+	"github.com/rs/zerolog/log"
 )
 
 func defaultAction(eventType, deliveryID string, payload []byte) {
-	log.Printf("Received %s event %s with payload of %s", eventType, deliveryID, humanize.Bytes(uint64(len(payload))))
+	log.Info().
+		Str("eventType", eventType).
+		Str("deliveryID", deliveryID).
+		Int("size", len(payload)).
+		Msg("Received event")
+
 	j := make(map[string]interface{})
 	err := json.Unmarshal(payload, &j)
 	if err != nil {
-		log.Printf("Error parsing payload: %v", err)
+		log.Error().Err(err).Msg("Error parsing payload")
 	}
 
 	pretty, err := json.MarshalIndent(j, "", "  ")
 	if err != nil {
-		log.Printf("Error unmarshaling payload: %v", err)
+		log.Error().Err(err).Msg("Error unmarshaling payload")
 	}
 	fmt.Println(string(pretty))
 }
@@ -31,7 +35,13 @@ func execArgs(args ...string) func(eventType, deliveryID string, payload []byte)
 		name := args[0]
 		cmdArgs := args[1:]
 		cmdArgs = append(cmdArgs, eventType, deliveryID)
-		logf("exec.Command(%s, %v) with input of %db", name, cmdArgs, len(payload))
+		log.Debug().
+			Str("eventType", eventType).
+			Str("deliveryID", deliveryID).
+			Int("size", len(payload)).
+			Str("command", name).
+			Strs("args", cmdArgs).
+			Msg("Received event, executing command")
 		input := bytes.NewBuffer(payload)
 		// nolint: gosec
 		c := exec.Command(name, cmdArgs...)
@@ -40,7 +50,7 @@ func execArgs(args ...string) func(eventType, deliveryID string, payload []byte)
 		c.Stdout = os.Stdout
 		err := c.Run()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			log.Error().Err(err).Msg(err.Error())
 		}
 	}
 }

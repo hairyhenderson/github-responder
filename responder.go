@@ -4,17 +4,17 @@ import (
 	"context"
 	"net/url"
 
-	"log"
 	"net/http"
 
 	"github.com/google/go-github/github"
 	"github.com/hairyhenderson/github-responder/autotls"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
 // Start -
-func Start(ctx context.Context, opts Config, action ActionFunc) (func(), error) {
+func Start(ctx context.Context, opts Config, action func(eventType, deliveryID string, payload []byte)) (func(), error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: opts.GitHubToken},
 	)
@@ -38,7 +38,7 @@ func Start(ctx context.Context, opts Config, action ActionFunc) (func(), error) 
 	}
 
 	// Register the webhook with GitHub
-	log.Println("Registering WebHook...")
+	log.Print("Registering WebHook...")
 	id, err := registerHook(ctx, client, opts)
 	if err != nil {
 		return nil, err
@@ -102,13 +102,14 @@ func registerHook(ctx context.Context, client *github.Client, opts Config) (int6
 	return id, nil
 }
 
-func handleCallback(secret string, action ActionFunc) func(resp http.ResponseWriter, req *http.Request) {
+func handleCallback(secret string, action func(eventType, deliveryID string, payload []byte)) func(resp http.ResponseWriter, req *http.Request) {
 	secretKey := []byte(secret)
 	return func(resp http.ResponseWriter, req *http.Request) {
 		log.Printf("Incoming request at %s", req.URL)
 		payload, err := github.ValidatePayload(req, secretKey)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err).
+				Msg(err.Error())
 			http.Error(resp, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -124,8 +125,3 @@ func handleCallback(secret string, action ActionFunc) func(resp http.ResponseWri
 func denyHandler(resp http.ResponseWriter, req *http.Request) {
 	resp.WriteHeader(http.StatusNotFound)
 }
-
-// ActionFunc - A function that will be executed by the callback
-//
-// Payload is provided as []byte, and can be parsed with github.ParseWebHook if desired
-type ActionFunc func(eventType, deliveryID string, payload []byte)

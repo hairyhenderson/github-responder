@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/afero"
 	"github.com/xenolf/lego/acme"
 )
@@ -131,13 +131,12 @@ func (c cert) needsRenewal() bool {
 	if c.certResource != nil {
 		expiration, err := acme.GetPEMCertExpiration(c.certResource.Certificate)
 		if err != nil {
-			log.Printf("error while checking expiration: %v", err)
+			log.Error().Err(err).Msg("error while checking expiration")
 			return true
 		}
 		timeLeft := expiration.Sub(time.Now().UTC())
 		log.Printf("cert has %v remaining", timeLeft)
 		if timeLeft < renewBefore {
-			log.Println("will renew")
 			return true
 		}
 	}
@@ -162,7 +161,6 @@ func (c *cert) renew(client *acme.Client) error {
 }
 
 func (c *cert) checkAndRenew(dir string, client *acme.Client) error {
-	log.Println("checkAndRenew")
 	if c.needsRenewal() {
 		err := c.renew(client)
 		if err != nil {
@@ -178,12 +176,17 @@ func (c *cert) renewLoop(ctx context.Context, dir string, client *acme.Client) {
 	for {
 		select {
 		case <-tick.C:
+			log.Debug().Msg("checking if cert needs renewal")
 			err := c.checkAndRenew(dir, client)
 			if err != nil {
-				log.Printf("error while renewing cert: %v", err)
+				log.Error().
+					Err(err).
+					Msg("error while renewing cert")
 			}
 		case <-ctx.Done():
-			log.Println(ctx.Err())
+			log.Error().
+				Err(ctx.Err()).
+				Msg("context interrupted during renew loop")
 			return
 		}
 	}
