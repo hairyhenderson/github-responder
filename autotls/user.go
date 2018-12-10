@@ -49,7 +49,10 @@ func (u acmeUser) save(dir string) error {
 	}
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "  ")
-	encoder.Encode(u)
+	err = encoder.Encode(u)
+	if err != nil {
+		return err
+	}
 
 	privBytes, err := savePrivateKey(u.key)
 	if err != nil {

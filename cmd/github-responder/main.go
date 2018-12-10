@@ -30,7 +30,7 @@ var (
 )
 
 const (
-	githubTokenName = "GITHUB_TOKEN"
+	ghtokName = "GITHUB_TOKEN"
 )
 
 func preRun(cmd *cobra.Command, args []string) error {
@@ -66,9 +66,9 @@ func preRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if opts.GitHubToken == "" {
-		token := os.Getenv(githubTokenName)
+		token := os.Getenv(ghtokName)
 		if token == "" {
-			return errors.Errorf("GitHub API token missing - must set %s", githubTokenName)
+			return errors.Errorf("GitHub API token missing - must set %s", ghtokName)
 		}
 
 		opts.GitHubToken = token

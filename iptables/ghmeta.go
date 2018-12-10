@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
+const (
 	githubMeta = "https://api.github.com/meta"
 )
 

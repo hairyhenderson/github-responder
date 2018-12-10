@@ -20,7 +20,7 @@ const (
 )
 
 // AutoTLS provides the ability to automatically retrieve TLS certificates from
-// Let's Encyrpt with a minimum of configuration.
+// Let's Encrypt with a minimum of configuration.
 type AutoTLS struct {
 	Accept bool
 	// Domain for which we want a cert
@@ -68,8 +68,7 @@ func (t *AutoTLS) CertPaths() (string, string) {
 	return certFile, keyFile
 }
 
-// Start -
-func (t *AutoTLS) Start(ctx context.Context) error {
+func (t *AutoTLS) validate() error {
 	if t.Domain == "" {
 		return errors.New("missing domain")
 	}
@@ -79,53 +78,34 @@ func (t *AutoTLS) Start(ctx context.Context) error {
 	if !t.Accept {
 		return errors.New("TLS ToS not accepted (--accept)")
 	}
-	ep := getHost(t.CAEndpoint)
-	base := filepath.Join(t.getStoragePath(), ep)
-	certPath := filepath.Join(base, "sites", t.Domain)
-	userPath := filepath.Join(base, "users", t.Email)
+	return nil
+}
 
+func (t *AutoTLS) getUser(userPath string) (*acmeUser, error) {
 	myUser := &acmeUser{}
 	ok, err := myUser.load(userPath, t.Email)
 	if err != nil {
-		return errors.Wrapf(err, "failed to load user %s from %s", t.Email, userPath)
+		return nil, errors.Wrapf(err, "failed to load user %s from %s", t.Email, userPath)
 	}
 	if !ok {
 		err = myUser.create(userPath, t.Email)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create user %s from %s", t.Email, userPath)
+			return nil, errors.Wrapf(err, "failed to create user %s from %s", t.Email, userPath)
 		}
 	}
+	return myUser, nil
+}
 
-	client, err := acme.NewClient(t.CAEndpoint, myUser, acme.EC256)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create acme client for %s", t.CAEndpoint)
-	}
-	client.SetHTTPAddress(t.HTTPAddress)
-	client.SetTLSAddress(t.TLSAddress)
-
-	if myUser.Registration == nil {
-		reg, err := client.Register(t.Accept)
-		if err != nil {
-			return errors.Wrapf(err, "failed to register user %s", t.Email)
-		}
-		myUser.Registration = reg
-
-		// Save the user now, since we have a registration!
-		err = myUser.save(userPath)
-		if err != nil {
-			return errors.Wrapf(err, "failed to save user at %s", userPath)
-		}
-	}
-
+func (t *AutoTLS) getCert(certPath string, client *acme.Client) (*cert, error) {
 	c := &cert{}
-	ok, err = c.load(t.Domain, certPath)
+	ok, err := c.load(t.Domain, certPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to load cert from %s", certPath)
+		return nil, errors.Wrapf(err, "failed to load cert from %s", certPath)
 	}
 	if !ok {
 		err = c.create(t.Domain, certPath, client)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create cert for %s", t.Domain)
+			return nil, errors.Wrapf(err, "failed to create cert for %s", t.Domain)
 		}
 	}
 	log.Debug().
@@ -141,13 +121,71 @@ func (t *AutoTLS) Start(ctx context.Context) error {
 			Msg("cert needs immediate renewal")
 		err = c.renew(client)
 		if err != nil {
-			return errors.Wrap(err, "failed to renew cert")
+			return nil, errors.Wrap(err, "failed to renew cert")
 		}
 	}
 
 	err = c.save(certPath)
 	if err != nil {
-		return errors.Wrap(err, "failed to save cert")
+		return nil, errors.Wrap(err, "failed to save cert")
+	}
+
+	return c, nil
+}
+
+func (t *AutoTLS) getClient(myUser *acmeUser) (*acme.Client, error) {
+	client, err := acme.NewClient(t.CAEndpoint, myUser, acme.EC256)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create acme client for %s", t.CAEndpoint)
+	}
+	err = client.SetHTTPAddress(t.HTTPAddress)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create acme client for %s", t.CAEndpoint)
+	}
+	err = client.SetTLSAddress(t.TLSAddress)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create acme client for %s", t.CAEndpoint)
+	}
+	return client, nil
+}
+
+// Start -
+func (t *AutoTLS) Start(ctx context.Context) error {
+	err := t.validate()
+	if err != nil {
+		return err
+	}
+	ep := getHost(t.CAEndpoint)
+	base := filepath.Join(t.getStoragePath(), ep)
+
+	userPath := filepath.Join(base, "users", t.Email)
+	myUser, err := t.getUser(userPath)
+	if err != nil {
+		return err
+	}
+
+	client, err := t.getClient(myUser)
+	if err != nil {
+		return err
+	}
+
+	if myUser.Registration == nil {
+		myUser.Registration, err = client.Register(t.Accept)
+		if err != nil {
+			return errors.Wrapf(err, "failed to register user %s", t.Email)
+		}
+
+		// Save the user now, since we have a registration!
+		err = myUser.save(userPath)
+		if err != nil {
+			return errors.Wrapf(err, "failed to save user at %s", userPath)
+		}
+	}
+
+	certPath := filepath.Join(base, "sites", t.Domain)
+	c, err := t.getCert(certPath, client)
+	if err != nil {
+		return err
 	}
 
 	// now start the renewal cycle

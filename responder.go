@@ -46,7 +46,10 @@ func Start(ctx context.Context, opts Config, action func(eventType, deliveryID s
 
 	cleanup := func() {
 		log.Printf("deleting hook %d", id)
-		client.Repositories.DeleteHook(ctx, opts.Owner, opts.Repo, id)
+		_, err := client.Repositories.DeleteHook(ctx, opts.Owner, opts.Repo, id)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to delete webhook")
+		}
 	}
 
 	// now listen for events
@@ -57,10 +60,16 @@ func Start(ctx context.Context, opts Config, action func(eventType, deliveryID s
 		if opts.EnableTLS {
 			certFile, keyFile := at.CertPaths()
 			log.Printf("Listening for webhook callbacks on %s", opts.TLSAddress)
-			http.ListenAndServeTLS(opts.TLSAddress, certFile, keyFile, nil)
+			err := http.ListenAndServeTLS(opts.TLSAddress, certFile, keyFile, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("")
+			}
 		} else {
 			log.Printf("Listening for webhook callbacks on %s", opts.HTTPAddress)
-			http.ListenAndServe(opts.HTTPAddress, nil)
+			err := http.ListenAndServe(opts.HTTPAddress, nil)
+			if err != nil {
+				log.Error().Err(err).Msg("")
+			}
 		}
 	}()
 
