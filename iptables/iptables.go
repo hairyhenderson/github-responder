@@ -47,19 +47,36 @@ func (g *GitHubHookRules) Init() error {
 		return errors.Wrapf(err, "failed to clear chain %s", hookChainName)
 	}
 	for _, cidr := range meta.Hooks {
-		i.Append(table, hookChainName, "-s", cidr.String(), "-j", "ACCEPT")
+		err = i.Append(table, hookChainName, "-s", cidr.String(), "-j", "ACCEPT")
+		if err != nil {
+			return errors.Wrapf(err, "failed to append rule for %s", cidr)
+		}
 	}
-	i.Append(table, hookChainName, "-j", "DROP")
+	err = i.Append(table, hookChainName, "-j", "DROP")
+	if err != nil {
+		return errors.Wrapf(err, "failed to append default rule for %s", hookChainName)
+	}
 
 	// now direct from specific ports
 	for _, port := range g.ports {
-		spec := []string{"-p", "tcp", "--dport", strconv.Itoa(port), "-j", hookChainName}
-		exists, err := i.Exists(table, "INPUT", spec...)
+		err = appendPortRule(port, i, table, hookChainName)
 		if err != nil {
-			return errors.Wrapf(err, "failed to check existence of %s", spec)
+			return err
 		}
-		if !exists {
-			i.Append(table, "INPUT", spec...)
+	}
+	return nil
+}
+
+func appendPortRule(port int, i *iptables.IPTables, table, chain string) error {
+	spec := []string{"-p", "tcp", "--dport", strconv.Itoa(port), "-j", chain}
+	exists, err := i.Exists(table, "INPUT", spec...)
+	if err != nil {
+		return errors.Wrapf(err, "failed to check existence of %s", spec)
+	}
+	if !exists {
+		err = i.Append(table, "INPUT", spec...)
+		if err != nil {
+			return errors.Wrapf(err, "failed to append rule for port %d", port)
 		}
 	}
 	return nil
@@ -83,7 +100,10 @@ func (g *GitHubHookRules) Cleanup() error {
 			return errors.Wrapf(err, "failed to check existence of %s", spec)
 		}
 		if exists {
-			i.Delete(table, "INPUT", spec...)
+			err = i.Delete(table, "INPUT", spec...)
+			if err != nil {
+				return errors.Wrapf(err, "failed to delete rule for %s", hookChainName)
+			}
 		}
 	}
 	return nil

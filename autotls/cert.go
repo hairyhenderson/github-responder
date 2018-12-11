@@ -68,20 +68,45 @@ func (c cert) save(dir string) error {
 	return nil
 }
 
-func (c *cert) load(domain, dir string) (bool, error) {
-	fileBase := filepath.Join(dir, domain)
-
-	f, err := fs.OpenFile(fileBase+".json", os.O_RDONLY, 0600)
+func loadCertResource(filename string) (*acme.CertificateResource, error) {
+	f, err := fs.OpenFile(filename, os.O_RDONLY, 0600)
 	if err != nil && !os.IsNotExist(err) {
-		return false, err
+		return nil, err
 	} else if os.IsNotExist(err) {
-		return false, nil
+		return nil, nil
 	}
 	decoder := json.NewDecoder(f)
 	certResource := &acme.CertificateResource{}
 	err = decoder.Decode(certResource)
 	if err != nil {
+		return nil, err
+	}
+	return certResource, nil
+}
+
+func loadFile(filename string) ([]byte, error) {
+	f, err := fs.OpenFile(filename, os.O_RDONLY, 0600)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, errors.Wrapf(err, "failed to load %s", filename)
+	} else if os.IsNotExist(err) {
+		return nil, nil
+	}
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+func (c *cert) load(domain, dir string) (bool, error) {
+	fileBase := filepath.Join(dir, domain)
+
+	certResource, err := loadCertResource(fileBase + ".json")
+	if err != nil {
 		return false, err
+	}
+	if certResource == nil {
+		return false, nil
 	}
 
 	// sanity check
@@ -89,29 +114,24 @@ func (c *cert) load(domain, dir string) (bool, error) {
 		return false, errors.Errorf("%s contains wrong domain %s (expected %s)", dir, certResource.Domain, domain)
 	}
 
-	certFile, err := fs.OpenFile(fileBase+".crt", os.O_RDONLY, 0600)
-	if err != nil && !os.IsNotExist(err) {
-		return false, errors.Wrapf(err, "missing .crt file")
-	} else if os.IsNotExist(err) {
-		return false, nil
-	}
-	b, err := ioutil.ReadAll(certFile)
+	b, err := loadFile(fileBase + ".crt")
 	if err != nil {
 		return false, err
+	}
+	if b == nil {
+		return false, nil
 	}
 	certResource.Certificate = b
 
-	privFile, err := fs.OpenFile(fileBase+".key", os.O_RDONLY, 0600)
-	if err != nil && !os.IsNotExist(err) {
-		return false, errors.Wrapf(err, "missing .key file")
-	} else if os.IsNotExist(err) {
-		return false, nil
-	}
-	b, err = ioutil.ReadAll(privFile)
+	b, err = loadFile(fileBase + ".key")
 	if err != nil {
 		return false, err
 	}
+	if b == nil {
+		return false, nil
+	}
 	certResource.PrivateKey = b
+
 	c.certResource = certResource
 	log.Printf("successfully loaded cert from %s", dir)
 	return true, nil
