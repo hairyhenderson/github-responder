@@ -104,7 +104,7 @@ func (u *acmeUser) load(dir, email string) (bool, error) {
 	}
 	u.key = privKey
 
-	log.Printf("successfully loaded user from %s", dir)
+	log.Debug().Str("path", dir).Msg("successfully loaded user")
 	return true, nil
 }
 

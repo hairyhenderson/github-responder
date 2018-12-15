@@ -133,7 +133,7 @@ func (c *cert) load(domain, dir string) (bool, error) {
 	certResource.PrivateKey = b
 
 	c.certResource = certResource
-	log.Printf("successfully loaded cert from %s", dir)
+	log.Debug().Str("path", dir).Msg("successfully loaded cert")
 	return true, nil
 }
 
@@ -155,7 +155,6 @@ func (c cert) needsRenewal() bool {
 			return true
 		}
 		timeLeft := expiration.Sub(time.Now().UTC())
-		log.Printf("cert has %v remaining", timeLeft)
 		if timeLeft < renewBefore {
 			return true
 		}
@@ -166,7 +165,7 @@ func (c cert) needsRenewal() bool {
 func (c cert) expiration() time.Time {
 	expiration, err := acme.GetPEMCertExpiration(c.certResource.Certificate)
 	if err != nil {
-		log.Printf("error while checking expiration: %v", err)
+		log.Error().Err(err).Msg("error while checking expiration")
 	}
 	return expiration
 }
@@ -196,7 +195,7 @@ func (c *cert) renewLoop(ctx context.Context, dir string, client *acme.Client) {
 	for {
 		select {
 		case <-tick.C:
-			log.Debug().Msg("checking if cert needs renewal")
+			log.Debug().Dur("interval", renewInterval).Msg("checking if cert needs renewal")
 			err := c.checkAndRenew(dir, client)
 			if err != nil {
 				log.Error().
