@@ -7,7 +7,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/miekg/dns v1.0.15 // indirect
+	github.com/miekg/dns v1.1.1 // indirect
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
