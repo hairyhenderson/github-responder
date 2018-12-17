@@ -22,7 +22,7 @@ require (
 	github.com/xenolf/lego v1.2.1
 	github.com/zenazn/goji v0.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
-	golang.org/x/net v0.0.0-20181215123718-891ebc4b82d6 // indirect
+	golang.org/x/net v0.0.0-20181217024130-e147a9138326 // indirect
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181210030007-2a47403f2ae5 // indirect
