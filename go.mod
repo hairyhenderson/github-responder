@@ -24,7 +24,7 @@ require (
 	golang.org/x/net v0.0.0-20181217024130-e147a9138326 // indirect
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	golang.org/x/sys v0.0.0-20181217024143-4d1cda033e06 // indirect
+	golang.org/x/sys v0.0.0-20181217233644-dcdaa6325bcb // indirect
 	google.golang.org/appengine v1.3.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/square/go-jose.v2 v2.2.1 // indirect
