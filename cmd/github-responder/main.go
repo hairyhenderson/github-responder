@@ -98,11 +98,12 @@ func newCmd() *cobra.Command {
 				Str("version", version.Version).
 				Str("commit", version.GitCommit).
 				Str("built", version.BuildDate).
-				Msg("github-responder")
+				Msg(cmd.CalledAs())
+			log.Debug().EmbedObject(opts).Msg("options")
 			cmd.SilenceErrors = true
 			cmd.SilenceUsage = true
 
-			var action func(string, string, []byte)
+			var action responder.HookHandler
 			if len(args) > 0 {
 				action = execArgs(args...)
 			} else {
@@ -111,12 +112,10 @@ func newCmd() *cobra.Command {
 			}
 
 			ctx := context.Background()
-			log.Printf("Starting responder with options %#v", opts)
 			cleanup, err := responder.Start(ctx, opts, action)
 			if err != nil {
 				return err
 			}
-			log.Print("Responder started...")
 			defer cleanup()
 
 			c := make(chan os.Signal, 1)
@@ -126,7 +125,7 @@ func newCmd() *cobra.Command {
 			case s := <-c:
 				log.Debug().
 					Str("signal", s.String()).
-					Msg(fmt.Sprintf("received %v, shutting down gracefully...", s))
+					Msg("shutting down gracefully...")
 			case <-ctx.Done():
 				err = ctx.Err()
 				log.Error().

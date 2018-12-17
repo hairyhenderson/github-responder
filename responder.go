@@ -2,19 +2,25 @@ package responder
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"time"
+
+	"github.com/rs/zerolog"
 
 	"net/http"
 
 	"github.com/google/go-github/github"
 	"github.com/hairyhenderson/github-responder/autotls"
+	"github.com/justinas/alice"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
 // Start -
-func Start(ctx context.Context, opts Config, action func(eventType, deliveryID string, payload []byte)) (func(), error) {
+func Start(ctx context.Context, opts Config, action HookHandler) (func(), error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: opts.GitHubToken},
 	)
@@ -38,14 +44,14 @@ func Start(ctx context.Context, opts Config, action func(eventType, deliveryID s
 	}
 
 	// Register the webhook with GitHub
-	log.Print("Registering WebHook...")
 	id, err := registerHook(ctx, client, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	cleanup := func() {
-		log.Printf("deleting hook %d", id)
+		log := log.With().Int64("hookID", id).Logger()
+		log.Info().Msg("Cleaning up webhook")
 		_, err := client.Repositories.DeleteHook(ctx, opts.Owner, opts.Repo, id)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to delete webhook")
@@ -54,18 +60,41 @@ func Start(ctx context.Context, opts Config, action func(eventType, deliveryID s
 
 	// now listen for events
 	go func() {
-		http.HandleFunc(getPath(opts.CallbackURL), handleCallback(opts.HookSecret, action))
-		http.HandleFunc("/", denyHandler)
+		c := alice.New(hlog.NewHandler(log.Logger))
+		c = c.Append(
+			hlog.UserAgentHandler("user_agent"),
+			hlog.RefererHandler("referer"),
+			hlog.MethodHandler("method"),
+			hlog.URLHandler("url"),
+		)
+		c = c.Append(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
+			eventType := github.WebHookType(r)
+			deliveryID := github.DeliveryID(r)
+			l := zerolog.DebugLevel
+			if status > 399 {
+				l = zerolog.WarnLevel
+			}
+			hlog.FromRequest(r).WithLevel(l).
+				Int("status", status).
+				Int("size", size).
+				Dur("duration", duration).
+				Str("eventType", eventType).
+				Str("deliveryID", deliveryID).
+				Msg("-")
+
+		}))
+		http.Handle(getPath(opts.CallbackURL), c.Then(&callbackHandler{[]byte(opts.HookSecret), action}))
+		http.Handle("/", c.ThenFunc(denyHandler))
 
 		if opts.EnableTLS {
 			certFile, keyFile := at.CertPaths()
-			log.Printf("Listening for webhook callbacks on %s", opts.TLSAddress)
+			log.Info().Str("addr", opts.TLSAddress).Msg("Listening for webhook callbacks")
 			err := http.ListenAndServeTLS(opts.TLSAddress, certFile, keyFile, nil)
 			if err != nil {
 				log.Error().Err(err).Msg("")
 			}
 		} else {
-			log.Printf("Listening for webhook callbacks on %s", opts.HTTPAddress)
+			log.Info().Str("addr", opts.HTTPAddress).Msg("Listening for webhook callbacks")
 			err := http.ListenAndServe(opts.HTTPAddress, nil)
 			if err != nil {
 				log.Error().Err(err).Msg("")
@@ -105,32 +134,67 @@ func registerHook(ctx context.Context, client *github.Client, opts Config) (int6
 		return 0, errors.Errorf("request failed with %s", resp.Status)
 	}
 	id := hook.GetID()
-	log.Printf("created hook, URL is %s", hook.GetURL())
-	log.Printf("callback is at %s", opts.CallbackURL)
+	log.Info().
+		Str("hook_url", hook.GetURL()).
+		Int64("hook_id", hook.GetID()).
+		Str("hook_name", hook.GetName()).
+		Str("callback", opts.CallbackURL).
+		Msg("Registered WebHook")
 
 	return id, nil
 }
 
-func handleCallback(secret string, action func(eventType, deliveryID string, payload []byte)) func(resp http.ResponseWriter, req *http.Request) {
-	secretKey := []byte(secret)
-	return func(resp http.ResponseWriter, req *http.Request) {
-		log.Printf("Incoming request at %s", req.URL)
-		payload, err := github.ValidatePayload(req, secretKey)
+type callbackHandler struct {
+	secretKey []byte
+	action    HookHandler
+}
+
+func (h *callbackHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	log := *hlog.FromRequest(req)
+	payload, err := github.ValidatePayload(req, h.secretKey)
+	if err != nil {
+		log.Error().Err(err).
+			Msg("invalid payload")
+		http.Error(resp, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	eventType := github.WebHookType(req)
+	deliveryID := github.DeliveryID(req)
+	log = log.With().
+		Str("eventType", eventType).
+		Str("deliveryID", deliveryID).Logger()
+	log.Info().Msg("Incoming request")
+	if eventType == "ping" {
+		event, err := github.ParseWebHook(eventType, payload)
 		if err != nil {
-			log.Error().Err(err).
-				Msg(err.Error())
+			log.Error().Err(err).Msg("failed to parse payload")
 			http.Error(resp, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		eventType := github.WebHookType(req)
-		deliveryID := github.DeliveryID(req)
-		go action(eventType, deliveryID, payload)
-
-		resp.WriteHeader(204)
+		ping, ok := event.(*github.PingEvent)
+		if !ok {
+			http.Error(resp, fmt.Sprintf("wrong event type %T", event), http.StatusBadRequest)
+			return
+		}
+		_, err = resp.Write([]byte(*ping.Zen))
+		if err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
+		return
 	}
+
+	ctx := log.WithContext(req.Context())
+	go h.action(ctx, eventType, deliveryID, payload)
+
+	resp.WriteHeader(http.StatusNoContent)
 }
 
 func denyHandler(resp http.ResponseWriter, req *http.Request) {
 	resp.WriteHeader(http.StatusNotFound)
 }
+
+// HookHandler - A function that will be executed by the callback.
+//
+// Payload is provided as []byte, and can be parsed with github.ParseWebHook if desired
+type HookHandler func(ctx context.Context, eventType, deliveryID string, payload []byte)
