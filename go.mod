@@ -3,7 +3,7 @@ module github.com/hairyhenderson/github-responder
 require (
 	github.com/coreos/go-iptables v0.4.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github v20.0.0
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
