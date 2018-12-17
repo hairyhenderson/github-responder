@@ -10,7 +10,7 @@ import (
 
 	"net/http"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v20/github"
 	"github.com/hairyhenderson/github-responder/autotls"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
@@ -137,7 +137,6 @@ func registerHook(ctx context.Context, client *github.Client, opts Config) (int6
 	log.Info().
 		Str("hook_url", hook.GetURL()).
 		Int64("hook_id", hook.GetID()).
-		Str("hook_name", hook.GetName()).
 		Str("callback", opts.CallbackURL).
 		Msg("Registered WebHook")
 
