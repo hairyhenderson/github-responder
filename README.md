@@ -1,6 +1,7 @@
 # github-responder
 
 [![Build Status][circleci-image]][circleci-url]
+[![hairyhenderson/github-responder on DockerHub][dockerhub-image]][dockerhub-url]
 
 A library & CLI tool that automatically sets up GitHub WebHooks and listens for events, with automatic TLS.
 
@@ -28,7 +29,16 @@ A few more details:
 - logs are output as structured JSON, or in a slightly easier-to-read format when run in an interactive terminal
 - github-responder can be used as a library in other Go programs
 
+
+## License
+
+[The MIT License](http://opensource.org/licenses/MIT)
+
+Copyright (c) 2018 Dave Henderson
+
 [circleci-image]: https://circleci.com/gh/hairyhenderson/github-responder/tree/master.svg?style=shield
 [circleci-url]: https://circleci.com/gh/hairyhenderson/github-responder/tree/master
+[dockerhub-image]: https://img.shields.io/badge/docker-ready-blue.svg
+[dockerhub-url]: https://hub.docker.com/r/hairyhenderson/github-responder
 
 [Let's Encrypt]: http://letsencrypt.org
