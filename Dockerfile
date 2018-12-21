@@ -1,4 +1,4 @@
-FROM golang:1.11.4-alpine@sha256:0e582bd4c47c5ecf6a1979c83c144b4d3172c8fb7901bde79cda128f33783083 AS build
+FROM golang:1.11.4-alpine@sha256:198cb8c94b9ee6941ce6d58f29aadb855f64600918ce602cdeacb018ad77d647 AS build
 
 ARG BUILD_DATE
 ARG VCS_REF
