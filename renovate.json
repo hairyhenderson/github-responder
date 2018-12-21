@@ -1,6 +1,5 @@
 {
   "extends": [],
-  "separateMajorReleases": true,
   "separatePatchReleases": false,
   "prCreation": "immediate",
   "branchPrefix": "renovate/",
