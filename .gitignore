@@ -2,3 +2,5 @@
 /bin/
 c.out
 .lego
+*.iid
+*.cid
