@@ -90,7 +90,6 @@ labels:
   - name: stale
     color: cccccc
     description: An open issue with no recent activity
-  - 
 
 # Collaborators: give specific users access to this repository.
 # collaborators:
