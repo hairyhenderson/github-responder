@@ -44,7 +44,7 @@ COPY --from=artifacts /bin/github-responder_${OS}-${ARCH} /github-responder
 
 ENTRYPOINT [ "/github-responder" ]
 
-FROM alpine:3.8@sha256:6e6778d41552b2d73b437e3e07c8e8299bd6903e9560419b1dd19e7a590fd670 AS github-responder-alpine
+FROM alpine:3.8@sha256:46e71df1e5191ab8b8034c5189e325258ec44ea739bba1e5645cff83c9048ff1 AS github-responder-alpine
 
 ARG BUILD_DATE
 ARG VCS_REF
