@@ -1,0 +1,51 @@
+#!/bin/bash
+set -exuo pipefail
+
+make -v
+docker version
+
+echo "======== Build hook running"
+export BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
+export VCS_REF=`git rev-parse --short HEAD`
+export DOCKER_REPO=${DOCKER_REPO:-hairyhenderson/github-responder}
+export DOCKER_TAG=${DOCKER_TAG:-latest}
+export IMAGE_NAME=${IMAGE_NAME:-${DOCKER_REPO}:${DOCKER_TAG}}
+export CODEOWNERS=$(grep $(dirname .) .github/CODEOWNERS | cut -f2)
+export VERSION=`git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2>/dev/null | sed 's/v\(.*\)/\1/'`
+
+docker build --target artifacts \
+             -t ${DOCKER_REPO}:artifacts .
+
+echo "======== Building $IMAGE_NAME"
+docker build --build-arg BUILD_DATE \
+             --build-arg VCS_REF \
+             --build-arg CODEOWNERS \
+             --build-arg VERSION \
+             --target github-responder \
+             -t ${IMAGE_NAME} .
+
+if [ "$DOCKER_TAG" == "latest" ]; then
+  export SLIM_TAG="slim"
+else
+  export SLIM_TAG="${DOCKER_TAG}-slim"
+fi
+echo "======== Building ${DOCKER_REPO}:${SLIM_TAG}"
+docker build --build-arg BUILD_DATE \
+             --build-arg VCS_REF \
+             --build-arg CODEOWNERS \
+             --build-arg VERSION \
+             --target github-responder-slim \
+             -t ${DOCKER_REPO}:${SLIM_TAG} .
+
+if [ "$DOCKER_TAG" == "latest" ]; then
+  export ALPINE_TAG="alpine"
+else
+  export ALPINE_TAG="${DOCKER_TAG}-alpine"
+fi
+echo "======== Building ${DOCKER_REPO}:${ALPINE_TAG}"
+docker build --build-arg BUILD_DATE \
+             --build-arg VCS_REF \
+             --build-arg CODEOWNERS \
+             --build-arg VERSION \
+             --target github-responder-alpine \
+             -t ${DOCKER_REPO}:${ALPINE_TAG} .
