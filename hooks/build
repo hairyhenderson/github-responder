@@ -3,7 +3,6 @@ set -exuo pipefail
 
 make -v
 docker version
-go version
 
 echo "======== Build hook running"
 export BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
