@@ -8,7 +8,7 @@ A library & CLI tool that automatically sets up GitHub WebHooks and listens for 
 For example, if you want to run a command every time someone stars your repo (the `watch` event):
 
 ```console
-$ github-responder --repo my/repo --domain hydrogen.hairyhenderson.ca -e watch ./ring-the-bell.sh
+$ github-responder --repo my/repo --domain myhost.example.com -e watch ./ring-the-bell.sh
 ...
 ```
 
