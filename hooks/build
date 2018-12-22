@@ -13,42 +13,19 @@ export IMAGE_NAME=${IMAGE_NAME:-${DOCKER_REPO}:${DOCKER_TAG}}
 export CODEOWNERS=$(grep $(dirname .) .github/CODEOWNERS | cut -f2)
 export VERSION=`git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2>/dev/null | sed 's/v\(.*\)/\1/'`
 
-# docker build --target artifacts \
-#              -t ${DOCKER_REPO}:artifacts .
-make artifacts.iid
-docker tag $(cat artifacts.iid) ${DOCKER_REPO}:artifacts
-
-echo "======== Building $IMAGE_NAME"
-docker build --build-arg BUILD_DATE \
-             --build-arg VCS_REF \
-             --build-arg CODEOWNERS \
-             --build-arg VERSION \
-             --target github-responder \
-             -t ${IMAGE_NAME} .
-make github-responder.tag
+make artifacts.tag
+make ${DOCKER_TAG}.tag
 
 if [ "$DOCKER_TAG" == "latest" ]; then
   export SLIM_TAG="slim"
 else
   export SLIM_TAG="${DOCKER_TAG}-slim"
 fi
-echo "======== Building ${DOCKER_REPO}:${SLIM_TAG}"
-docker build --build-arg BUILD_DATE \
-             --build-arg VCS_REF \
-             --build-arg CODEOWNERS \
-             --build-arg VERSION \
-             --target github-responder-slim \
-             -t ${DOCKER_REPO}:${SLIM_TAG} .
+make ${SLIM_TAG}.tag
 
 if [ "$DOCKER_TAG" == "latest" ]; then
   export ALPINE_TAG="alpine"
 else
   export ALPINE_TAG="${DOCKER_TAG}-alpine"
 fi
-echo "======== Building ${DOCKER_REPO}:${ALPINE_TAG}"
-docker build --build-arg BUILD_DATE \
-             --build-arg VCS_REF \
-             --build-arg CODEOWNERS \
-             --build-arg VERSION \
-             --target github-responder-alpine \
-             -t ${DOCKER_REPO}:${ALPINE_TAG} .
+make ${ALPINE_TAG}.tag

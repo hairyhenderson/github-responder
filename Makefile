@@ -6,6 +6,9 @@ PREFIX := .
 GO111MODULE := on
 GOFLAGS := -mod=vendor
 
+DOCKER_REPO ?= hairyhenderson/github-responder
+DOCKER_TAG ?= latest
+
 ifeq ("$(CI)","true")
 LINT_PROCS ?= 1
 else
@@ -66,8 +69,24 @@ compress: $(PREFIX)/bin/$(PKG_NAME)_$(GOOS)-$(GOARCH)-slim$(call extension,$(GOO
 		--iidfile $@ \
 		.
 
+v%-alpine.tag: alpine.iid
+	@docker tag $(shell cat $^) $(DOCKER_REPO):$(subst .tag,,$@)
+	@echo $(DOCKER_REPO):$(subst .tag,,$@) > $@
+
+v%-slim.tag: slim.iid
+	@docker tag $(shell cat $^) $(DOCKER_REPO):$(subst .tag,,$@)
+	@echo $(DOCKER_REPO):$(subst .tag,,$@) > $@
+
+v%.tag: latest.iid
+	@docker tag $(shell cat $^) $(DOCKER_REPO):$(subst .tag,,$@)
+	@echo $(DOCKER_REPO):$(subst .tag,,$@) > $@
+
+%.tag: %.iid
+	@docker tag $(shell cat $^) $(DOCKER_REPO):$(subst .tag,,$@)
+	@echo $(DOCKER_REPO):$(subst .tag,,$@) > $@
+
 %.cid: %.iid
-	@docker create $(shell cat $<) > $@
+	@docker create --cidfile $@ $(shell cat $<)
 
 build-release: artifacts.cid
 	@docker cp $(shell cat $<):/bin/. bin/

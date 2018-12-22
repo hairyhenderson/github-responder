@@ -23,7 +23,7 @@ COPY --from=build /go/src/github.com/hairyhenderson/github-responder/bin/* /bin/
 
 CMD [ "/bin/github-responder_linux-amd64" ]
 
-FROM scratch AS github-responder
+FROM scratch AS latest
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -44,7 +44,7 @@ COPY --from=artifacts /bin/github-responder_${OS}-${ARCH} /github-responder
 
 ENTRYPOINT [ "/github-responder" ]
 
-FROM alpine:3.8@sha256:46e71df1e5191ab8b8034c5189e325258ec44ea739bba1e5645cff83c9048ff1 AS github-responder-alpine
+FROM alpine:3.8@sha256:46e71df1e5191ab8b8034c5189e325258ec44ea739bba1e5645cff83c9048ff1 AS alpine
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -65,7 +65,7 @@ COPY --from=artifacts /bin/github-responder_${OS}-${ARCH}-slim /bin/github-respo
 
 ENTRYPOINT [ "/bin/github-responder" ]
 
-FROM scratch AS github-responder-slim
+FROM scratch AS slim
 
 ARG BUILD_DATE
 ARG VCS_REF
