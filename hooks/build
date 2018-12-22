@@ -3,6 +3,7 @@ set -exuo pipefail
 
 make -v
 docker version
+go version
 
 echo "======== Build hook running"
 export BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
@@ -13,8 +14,10 @@ export IMAGE_NAME=${IMAGE_NAME:-${DOCKER_REPO}:${DOCKER_TAG}}
 export CODEOWNERS=$(grep $(dirname .) .github/CODEOWNERS | cut -f2)
 export VERSION=`git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2>/dev/null | sed 's/v\(.*\)/\1/'`
 
-docker build --target artifacts \
-             -t ${DOCKER_REPO}:artifacts .
+# docker build --target artifacts \
+#              -t ${DOCKER_REPO}:artifacts .
+make artifacts.iid
+docker tag $(cat artifacts.iid) ${DOCKER_REPO}:artifacts
 
 echo "======== Building $IMAGE_NAME"
 docker build --build-arg BUILD_DATE \
@@ -23,6 +26,7 @@ docker build --build-arg BUILD_DATE \
              --build-arg VERSION \
              --target github-responder \
              -t ${IMAGE_NAME} .
+make github-responder.tag
 
 if [ "$DOCKER_TAG" == "latest" ]; then
   export SLIM_TAG="slim"
