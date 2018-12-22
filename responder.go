@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
+
+	"github.com/mholt/certmagic"
 
 	"github.com/rs/zerolog"
 
 	"net/http"
 
 	"github.com/google/go-github/v20/github"
-	"github.com/hairyhenderson/github-responder/autotls"
 	"github.com/justinas/alice"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/hlog"
@@ -27,22 +29,6 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 	hc := &http.Client{Transport: &oauth2.Transport{Source: ts}}
 	client := github.NewClient(hc)
 
-	// TLS stuff
-	var at *autotls.AutoTLS
-	if opts.EnableTLS {
-		at = autotls.New(opts.Domain, opts.Email)
-		at.HTTPAddress = opts.HTTPAddress
-		at.TLSAddress = opts.TLSAddress
-		at.CAEndpoint = opts.CAEndpoint
-		at.Accept = opts.Accept
-		at.StoragePath = opts.StoragePath
-
-		err := at.Start(ctx)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to autotls.Start")
-		}
-	}
-
 	// Register the webhook with GitHub
 	id, err := registerHook(ctx, client, opts)
 	if err != nil {
@@ -57,6 +43,10 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 			log.Error().Err(err).Msg("failed to delete webhook")
 		}
 	}
+
+	certmagic.CA = opts.CAEndpoint
+	certmagic.HTTPPort = opts.HTTPPort
+	certmagic.HTTPSPort = opts.HTTPSPort
 
 	// now listen for events
 	go func() {
@@ -87,15 +77,15 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 		http.Handle("/", c.ThenFunc(denyHandler))
 
 		if opts.EnableTLS {
-			certFile, keyFile := at.CertPaths()
-			log.Info().Str("addr", opts.TLSAddress).Msg("Listening for webhook callbacks")
-			err := http.ListenAndServeTLS(opts.TLSAddress, certFile, keyFile, nil)
+			log.Info().Int("port", opts.HTTPSPort).Msg("Listening for webhook callbacks")
+			err := certmagic.HTTPS([]string{opts.Domain}, nil)
 			if err != nil {
 				log.Error().Err(err).Msg("")
 			}
 		} else {
-			log.Info().Str("addr", opts.HTTPAddress).Msg("Listening for webhook callbacks")
-			err := http.ListenAndServe(opts.HTTPAddress, nil)
+			log.Info().Int("port", opts.HTTPPort).Msg("Listening for webhook callbacks")
+			port := strconv.Itoa(opts.HTTPPort)
+			err := http.ListenAndServe(":"+port, nil)
 			if err != nil {
 				log.Error().Err(err).Msg("")
 			}
