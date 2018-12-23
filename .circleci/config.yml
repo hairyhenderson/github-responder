@@ -10,6 +10,8 @@ jobs:
       - run:
           name: test vendoring
           command: |
+            export GO111MODULE=on
+            export GOFLAGS=-mod=vendor
             go mod tidy && go mod vendor
       - run: make build
       - run: cc-test-reporter before-build
