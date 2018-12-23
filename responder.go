@@ -56,6 +56,7 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 			hlog.RefererHandler("referer"),
 			hlog.MethodHandler("method"),
 			hlog.URLHandler("url"),
+			hlog.RemoteAddrHandler("remoteAddr"),
 		)
 		c = c.Append(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
 			eventType := github.WebHookType(r)
@@ -70,8 +71,7 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 				Dur("duration", duration).
 				Str("eventType", eventType).
 				Str("deliveryID", deliveryID).
-				Msg("-")
-
+				Msgf("%s %s - %d", r.Method, r.URL, status)
 		}))
 		http.Handle(getPath(opts.CallbackURL), c.Then(&callbackHandler{[]byte(opts.HookSecret), action}))
 		http.Handle("/", c.ThenFunc(denyHandler))
