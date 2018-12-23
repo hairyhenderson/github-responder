@@ -17,9 +17,8 @@ type Config struct {
 	// TLS options
 	Domain      string
 	Email       string
-	Accept      bool
-	HTTPAddress string
-	TLSAddress  string
+	HTTPPort    int
+	HTTPSPort   int
 	EnableTLS   bool
 	StoragePath string
 	CAEndpoint  string
@@ -35,9 +34,8 @@ func (c Config) MarshalZerologObject(e *zerolog.Event) {
 		Str("callback_url", c.CallbackURL).
 		Str("domain", c.Domain).
 		Str("email", c.Email).
-		Bool("accept", c.Accept).
-		Str("http_addr", c.HTTPAddress).
-		Str("tls_addr", c.TLSAddress).
+		Int("http_port", c.HTTPPort).
+		Int("https_port", c.HTTPSPort).
 		Bool("enable_tls", c.EnableTLS).
 		Str("path", c.StoragePath).
 		Str("ca", c.CAEndpoint)

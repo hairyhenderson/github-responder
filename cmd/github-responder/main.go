@@ -12,8 +12,9 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/mholt/certmagic"
+
 	"github.com/hairyhenderson/github-responder"
-	"github.com/hairyhenderson/github-responder/autotls"
 	"github.com/hairyhenderson/github-responder/version"
 
 	"github.com/pkg/errors"
@@ -146,15 +147,13 @@ func initFlags(command *cobra.Command) {
 	command.Flags().StringVar(&opts.CallbackURL, "callback", "", "The WebHook Callback URL. If left blank, one will be generated for you.")
 	command.Flags().StringArrayVarP(&opts.Events, "events", "e", []string{"*"}, "The GitHub event types to listen for. See https://developer.github.com/webhooks/#events for the full list.")
 
-	command.Flags().StringVar(&opts.HTTPAddress, "http", ":80", "Address to listen to for HTTP traffic.")
-	command.Flags().StringVar(&opts.TLSAddress, "https", ":443", "Address to listen to for TLS traffic.")
+	command.Flags().IntVar(&opts.HTTPPort, "http", 80, "Port to listen on for HTTP traffic")
+	command.Flags().IntVar(&opts.HTTPSPort, "https", 443, "Port to listen on for HTTPS traffic")
 
 	command.Flags().BoolVar(&opts.EnableTLS, "tls", true, "Enable automatic TLS negotiation")
 	command.Flags().StringVarP(&opts.Domain, "domain", "d", "", "domain to serve - a cert will be acquired for this domain")
-	command.Flags().StringVarP(&opts.Email, "email", "m", "", "Email used for registration and recovery contact.")
-	command.Flags().BoolVarP(&opts.Accept, "accept-tos", "a", false, "By setting this flag to true you indicate that you accept the current Let's Encrypt terms of service.")
-	command.Flags().StringVar(&opts.CAEndpoint, "ca", autotls.LetsEncryptProductionURL, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
-	command.Flags().StringVar(&opts.StoragePath, "path", "", "Directory to use for storing data")
+	command.Flags().StringVarP(&opts.Email, "email", "m", "", "Email used for registration and recovery contact (optional, but recommended)")
+	command.Flags().StringVar(&opts.CAEndpoint, "ca", certmagic.LetsEncryptProductionCA, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
 
 	command.Flags().BoolVarP(&verbose, "verbose", "V", false, "Output extra logs")
 	command.Flags().BoolVarP(&printVer, "version", "v", false, "Print the version")
