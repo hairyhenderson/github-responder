@@ -7,6 +7,10 @@ jobs:
     working_directory: /go/src/github.com/hairyhenderson/github-responder
     steps:
       - checkout
+      - run:
+          name: test vendoring
+          command: |
+            go mod tidy && go mod vendor
       - run: make build
       - run: cc-test-reporter before-build
       - run:
