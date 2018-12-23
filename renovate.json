@@ -5,16 +5,16 @@
   "branchPrefix": "renovate/",
   "updateNotScheduled": true,
   "minor": {
-    "automerge": true
+    "automerge": false
   },
   "patch": {
-    "automerge": true
+    "automerge": false
   },
   "pin": {
-    "automerge": true
+    "automerge": false
   },
   "lockFileMaintenance": {
-    "automerge": true
+    "automerge": false
   },
   "docker": {
     "fileMatch": ["(^|/)Dockerfile.*$"],
