@@ -98,7 +98,6 @@ func newCmd() *cobra.Command {
 			log.Debug().
 				Str("version", version.Version).
 				Str("commit", version.GitCommit).
-				Str("built", version.BuildDate).
 				Msg(cmd.CalledAs())
 			log.Debug().EmbedObject(opts).Msg("options")
 			cmd.SilenceErrors = true

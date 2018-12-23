@@ -5,6 +5,4 @@ var (
 	Version = "0.0.0"
 	// GitCommit will be overwritten automatically by the build
 	GitCommit = "HEAD"
-	// BuildDate will be overwritten automatically by the build
-	BuildDate = ""
 )
