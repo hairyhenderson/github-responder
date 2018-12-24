@@ -5,6 +5,7 @@ PKG_NAME := github-responder
 PREFIX := .
 GO111MODULE := on
 GOFLAGS := -mod=vendor
+DOCKER_BUILDKIT ?= 1
 
 DOCKER_REPO ?= hairyhenderson/github-responder
 DOCKER_TAG ?= latest
@@ -17,17 +18,19 @@ endif
 
 COMMIT ?= `git rev-parse --short HEAD 2>/dev/null`
 VERSION ?= `git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2>/dev/null | sed 's/v\(.*\)/\1/'`
-BUILD_DATE ?= `date -u +"%Y-%m-%dT%H:%M:%SZ"`
+# BUILD_DATE ?= `date -u +"%Y-%m-%dT%H:%M:%SZ"`
 
 COMMIT_FLAG := -X `go list ./version`.GitCommit=$(COMMIT)
 VERSION_FLAG := -X `go list ./version`.Version=$(VERSION)
-BUILD_DATE_FLAG := -X `go list ./version`.BuildDate=$(BUILD_DATE)
+# BUILD_DATE_FLAG := -X `go list ./version`.BuildDate=$(BUILD_DATE)
 
 GOOS ?= $(shell go version | sed 's/^.*\ \([a-z0-9]*\)\/\([a-z0-9]*\)/\1/')
 GOARCH ?= $(shell go version | sed 's/^.*\ \([a-z0-9]*\)\/\([a-z0-9]*\)/\2/')
 
-platforms := linux-amd64 linux-arm linux-arm64 darwin-amd64 windows-amd64.exe
-compressed-platforms := linux-amd64-slim linux-arm-slim linux-arm64-slim darwin-amd64-slim windows-amd64-slim.exe
+# platforms := linux-amd64 linux-arm linux-arm64 darwin-amd64 windows-amd64.exe
+# compressed-platforms := linux-amd64-slim linux-arm-slim linux-arm64-slim darwin-amd64-slim windows-amd64-slim.exe
+platforms := linux-amd64
+compressed-platforms := linux-amd64-slim
 
 clean:
 	rm -Rf $(PREFIX)/bin/*
@@ -61,7 +64,6 @@ compress: $(PREFIX)/bin/$(PKG_NAME)_$(GOOS)-$(GOARCH)-slim$(call extension,$(GOO
 
 %.iid: Dockerfile
 	@docker build \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
 		--build-arg VCS_REF=$(COMMIT) \
 		--build-arg CODEOWNERS="$(shell grep `dirname $@` .github/CODEOWNERS | cut -f2)" \
 		--build-arg VERSION=$(VERSION) \
@@ -96,7 +98,7 @@ docker-images: $(PKG_NAME).iid $(PKG_NAME)-slim.iid
 $(PREFIX)/bin/$(PKG_NAME)_%: $(shell find $(PREFIX) -type f -name '*.go')
 	GOOS=$(shell echo $* | cut -f1 -d-) GOARCH=$(shell echo $* | cut -f2 -d- | cut -f1 -d.) CGO_ENABLED=0 \
 		$(GO) build \
-			-ldflags "-w -s $(COMMIT_FLAG) $(VERSION_FLAG) $(BUILD_DATE_FLAG)" \
+			-ldflags "-w -s $(COMMIT_FLAG) $(VERSION_FLAG)" \
 			-o $@ \
 			./cmd/$(PKG_NAME)
 

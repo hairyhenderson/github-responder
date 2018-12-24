@@ -1,0 +1,7 @@
+/github-responder
+/bin/
+c.out
+.lego
+*.iid
+*.cid
+*.tag
