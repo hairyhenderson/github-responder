@@ -15,13 +15,12 @@ type Config struct {
 	CallbackURL string
 
 	// TLS options
-	Domain      string
-	Email       string
-	HTTPPort    int
-	HTTPSPort   int
-	EnableTLS   bool
-	StoragePath string
-	CAEndpoint  string
+	Domain     string
+	Email      string
+	HTTPPort   int
+	HTTPSPort  int
+	EnableTLS  bool
+	CAEndpoint string
 }
 
 var _ zerolog.LogObjectMarshaler = Config{}
@@ -37,6 +36,5 @@ func (c Config) MarshalZerologObject(e *zerolog.Event) {
 		Int("http_port", c.HTTPPort).
 		Int("https_port", c.HTTPSPort).
 		Bool("enable_tls", c.EnableTLS).
-		Str("path", c.StoragePath).
 		Str("ca", c.CAEndpoint)
 }
