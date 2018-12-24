@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/mholt/certmagic"
 
 	"github.com/rs/zerolog"
@@ -48,6 +50,8 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 	certmagic.HTTPPort = opts.HTTPPort
 	certmagic.HTTPSPort = opts.HTTPSPort
 
+	initMetrics()
+
 	// now listen for events
 	go func() {
 		c := alice.New(hlog.NewHandler(log.Logger))
@@ -73,8 +77,9 @@ func Start(ctx context.Context, opts Config, action HookHandler) (func(), error)
 				Str("deliveryID", deliveryID).
 				Msgf("%s %s - %d", r.Method, r.URL, status)
 		}))
-		http.Handle(getPath(opts.CallbackURL), c.Then(&callbackHandler{[]byte(opts.HookSecret), action}))
-		http.Handle("/", c.ThenFunc(denyHandler))
+		http.Handle("/metrics", c.Append(filterByIP).Extend(instrumentHTTP("metrics")).Then(promhttp.Handler()))
+		http.Handle(getPath(opts.CallbackURL), c.Extend(instrumentHTTP("callback")).Then(&callbackHandler{[]byte(opts.HookSecret), action}))
+		http.Handle("/", c.Extend(instrumentHTTP("default")).ThenFunc(denyHandler))
 
 		if opts.EnableTLS {
 			log.Info().Int("port", opts.HTTPSPort).Msg("Listening for webhook callbacks")

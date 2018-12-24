@@ -12,6 +12,7 @@ require (
 	github.com/miekg/dns v1.1.1 // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_golang v0.9.2
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/rs/zerolog v1.11.0
 	github.com/satori/go.uuid v1.2.0
