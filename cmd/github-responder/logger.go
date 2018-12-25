@@ -27,7 +27,3 @@ func initLogger() {
 		stdlog.SetOutput(stdlogger)
 	}
 }
-
-func setVerboseLogging() {
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-}
