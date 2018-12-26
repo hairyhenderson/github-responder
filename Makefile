@@ -137,8 +137,6 @@ lint:
 		--enable=misspell \
 		--enable=goimports \
 		--enable=gofmt \
-		./...
-	gometalinter -j $(LINT_PROCS) --vendor --skip tests --disable-all \
 		--enable=deadcode \
 		./...
 

@@ -7,76 +7,25 @@ package main
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"os"
-	"os/signal"
-	"strings"
 
 	"github.com/mholt/certmagic"
 
-	"github.com/hairyhenderson/github-responder"
+	responder "github.com/hairyhenderson/github-responder"
 	"github.com/hairyhenderson/github-responder/version"
 
-	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
 
 var (
 	printVer bool
 	verbose  bool
-	opts     responder.Config
 	repo     string
+	events   []string
+	domain   string
 )
-
-const (
-	ghtokName = "GITHUB_TOKEN"
-)
-
-func preRun(cmd *cobra.Command, args []string) error {
-	if verbose {
-		setVerboseLogging()
-	}
-
-	if repo == "" {
-		return errors.New("must provide repo")
-	}
-
-	parts := strings.SplitN(repo, "/", 2)
-	if len(parts) != 2 {
-		return errors.Errorf("invalid repo %s - need 'owner/repo' form", repo)
-	}
-	opts.Owner = parts[0]
-	opts.Repo = parts[1]
-
-	if opts.CallbackURL == "" {
-		u := uuid.NewV4()
-		callbackURL := ""
-		if opts.EnableTLS {
-			callbackURL = "https://"
-		} else {
-			callbackURL = "http://"
-		}
-		callbackURL = callbackURL + opts.Domain + "/gh-callback/" + u.String()
-		opts.CallbackURL = callbackURL
-	}
-
-	if opts.HookSecret == "" {
-		opts.HookSecret = fmt.Sprintf("%x", rand.Int63())
-	}
-
-	if opts.GitHubToken == "" {
-		token := os.Getenv(ghtokName)
-		if token == "" {
-			return errors.Errorf("GitHub API token missing - must set %s", ghtokName)
-		}
-
-		opts.GitHubToken = token
-	}
-
-	return nil
-}
 
 func printVersion(name string) {
 	fmt.Printf("%s version %s\n", name, version.Version)
@@ -89,8 +38,10 @@ func newCmd() *cobra.Command {
 		Example: `  Run ./handle_event.sh every time a webhook event is received:
 
   $ github-responder -a -d example.com -e me@example.com ./handle_event.sh`,
-		PreRunE: preRun,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if verbose {
+				zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			}
 			if printVer {
 				printVersion(cmd.Name())
 				return nil
@@ -99,7 +50,6 @@ func newCmd() *cobra.Command {
 				Str("version", version.Version).
 				Str("commit", version.GitCommit).
 				Msg(cmd.CalledAs())
-			log.Debug().EmbedObject(opts).Msg("options")
 			cmd.SilenceErrors = true
 			cmd.SilenceUsage = true
 
@@ -112,29 +62,13 @@ func newCmd() *cobra.Command {
 			}
 
 			ctx := context.Background()
-			cleanup, err := responder.Start(ctx, opts, action)
+			r, err := responder.New(repo, domain)
 			if err != nil {
 				return err
 			}
-			defer cleanup()
 
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt)
-
-			select {
-			case s := <-c:
-				log.Debug().
-					Str("signal", s.String()).
-					Msg("shutting down gracefully...")
-			case <-ctx.Done():
-				err = ctx.Err()
-				log.Error().
-					Err(err).
-					Msg("context cancelled")
-			}
-			return err
+			return r.RegisterAndListen(ctx, events, action)
 		},
-		Args: cobra.ArbitraryArgs,
 	}
 	return rootCmd
 }
@@ -143,16 +77,14 @@ func initFlags(command *cobra.Command) {
 	command.Flags().SortFlags = false
 
 	command.Flags().StringVarP(&repo, "repo", "r", "", "The GitHub repository to watch, in 'owner/repo' form")
-	command.Flags().StringVar(&opts.CallbackURL, "callback", "", "The WebHook Callback URL. If left blank, one will be generated for you.")
-	command.Flags().StringArrayVarP(&opts.Events, "events", "e", []string{"*"}, "The GitHub event types to listen for. See https://developer.github.com/webhooks/#events for the full list.")
+	command.Flags().StringArrayVarP(&events, "events", "e", []string{"*"}, "The GitHub event types to listen for. See https://developer.github.com/webhooks/#events for the full list.")
 
-	command.Flags().IntVar(&opts.HTTPPort, "http", 80, "Port to listen on for HTTP traffic")
-	command.Flags().IntVar(&opts.HTTPSPort, "https", 443, "Port to listen on for HTTPS traffic")
+	command.Flags().IntVar(&certmagic.HTTPPort, "http", 80, "Port to listen on for HTTP traffic")
+	command.Flags().IntVar(&certmagic.HTTPSPort, "https", 443, "Port to listen on for HTTPS traffic")
 
-	command.Flags().BoolVar(&opts.EnableTLS, "tls", true, "Enable automatic TLS negotiation")
-	command.Flags().StringVarP(&opts.Domain, "domain", "d", "", "domain to serve - a cert will be acquired for this domain")
-	command.Flags().StringVarP(&opts.Email, "email", "m", "", "Email used for registration and recovery contact (optional, but recommended)")
-	command.Flags().StringVar(&opts.CAEndpoint, "ca", certmagic.LetsEncryptProductionCA, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
+	command.Flags().StringVarP(&domain, "domain", "d", "", "domain to serve - a cert will be acquired for this domain")
+	command.Flags().StringVarP(&certmagic.Email, "email", "m", "", "Email used for registration and recovery contact (optional, but recommended)")
+	command.Flags().StringVar(&certmagic.CA, "ca", certmagic.LetsEncryptProductionCA, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
 
 	command.Flags().BoolVarP(&verbose, "verbose", "V", false, "Output extra logs")
 	command.Flags().BoolVarP(&printVer, "version", "v", false, "Print the version")

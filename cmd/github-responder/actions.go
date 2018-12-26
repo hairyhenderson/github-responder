@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/hairyhenderson/github-responder"
+	responder "github.com/hairyhenderson/github-responder"
 	"github.com/rs/zerolog/log"
 )
 
