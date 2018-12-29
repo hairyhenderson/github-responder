@@ -111,7 +111,9 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 
 	var unregFuncs []func()
 	for _, repo := range r.repos {
-		hook, resp, err := r.ghclient.Repositories.CreateHook(ctx, repo.owner, repo.name, inHook)
+		owner := repo.owner
+		repoName := repo.name
+		hook, resp, err := r.ghclient.Repositories.CreateHook(ctx, owner, repoName, inHook)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create hook")
 		}
@@ -129,7 +131,7 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 		unregFuncs = append(unregFuncs, func() {
 			log := log.With().Int64("hook_id", id).Logger()
 			log.Info().Msg("Cleaning up webhook")
-			_, err := r.ghclient.Repositories.DeleteHook(ctx, repo.owner, repo.name, id)
+			_, err := r.ghclient.Repositories.DeleteHook(ctx, owner, repoName, id)
 			if err != nil {
 				err = errors.Wrap(err, "failed to delete webhook")
 				log.Error().Err(err).Msg("failed to delete webhook")
