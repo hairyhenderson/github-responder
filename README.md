@@ -3,7 +3,7 @@
 [![Build Status][circleci-image]][circleci-url]
 [![hairyhenderson/github-responder on DockerHub][dockerhub-image]][dockerhub-url]
 
-A library & CLI tool that automatically sets up GitHub WebHooks and listens for events, with automatic TLS.
+A library & CLI tool that automatically sets up GitHub WebHooks and listens for events, with automatic TLS provided by [certmagic][].
 
 For example, if you want to run a command every time someone stars your repo (the `watch` event):
 
@@ -41,4 +41,5 @@ Copyright (c) 2018 Dave Henderson
 [dockerhub-image]: https://img.shields.io/badge/docker-ready-blue.svg
 [dockerhub-url]: https://hub.docker.com/r/hairyhenderson/github-responder
 
-[Let's Encrypt]: http://letsencrypt.org
+[Let's Encrypt]: https://letsencrypt.org
+[certmagic]: https://github.com/mholt/certmagic

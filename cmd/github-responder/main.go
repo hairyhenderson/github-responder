@@ -22,7 +22,7 @@ import (
 var (
 	printVer bool
 	verbose  bool
-	repo     string
+	repos    []string
 	events   []string
 	domain   string
 )
@@ -37,7 +37,7 @@ func newCmd() *cobra.Command {
 		Short: "Create and listen to GitHub WebHooks",
 		Example: `  Run ./handle_event.sh every time a webhook event is received:
 
-  $ github-responder -a -d example.com -e me@example.com ./handle_event.sh`,
+  $ github-responder -d example.com ./handle_event.sh`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if verbose {
 				zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -61,13 +61,13 @@ func newCmd() *cobra.Command {
 				action = defaultAction
 			}
 
-			ctx := context.Background()
-			r, err := responder.New(repo, domain)
+			r, err := responder.New(repos, domain, action)
 			if err != nil {
 				return err
 			}
 
-			return r.RegisterAndListen(ctx, events, action)
+			ctx := context.Background()
+			return r.RegisterAndListen(ctx, events)
 		},
 	}
 	return rootCmd
@@ -76,8 +76,8 @@ func newCmd() *cobra.Command {
 func initFlags(command *cobra.Command) {
 	command.Flags().SortFlags = false
 
-	command.Flags().StringVarP(&repo, "repo", "r", "", "The GitHub repository to watch, in 'owner/repo' form")
-	command.Flags().StringArrayVarP(&events, "events", "e", []string{"*"}, "The GitHub event types to listen for. See https://developer.github.com/webhooks/#events for the full list.")
+	command.Flags().StringArrayVarP(&repos, "repo", "r", []string{}, "The GitHub repository to watch, in 'owner/repo' form. Specify multiple times to watch many repos.")
+	command.Flags().StringArrayVarP(&events, "events", "e", []string{"*"}, "The GitHub event type(s) to listen for. Specify multiple times to watch many events. See https://developer.github.com/webhooks/#events for the full list.")
 
 	command.Flags().IntVar(&certmagic.HTTPPort, "http", 80, "Port to listen on for HTTP traffic")
 	command.Flags().IntVar(&certmagic.HTTPSPort, "https", 443, "Port to listen on for HTTPS traffic")
