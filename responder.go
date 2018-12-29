@@ -29,11 +29,16 @@ const (
 	ghtokName = "GITHUB_TOKEN"
 )
 
+type repository struct {
+	owner string
+	name  string
+}
+
 // Responder -
 type Responder struct {
 	ghclient    *github.Client
 	secret      string
-	owner, repo string
+	repos       []repository
 	events      []string
 	callbackURL string
 	actions     []HookHandler
@@ -41,39 +46,41 @@ type Responder struct {
 }
 
 // New -
-func New(repo, domain string) (*Responder, error) {
-	// init repo/owner
-	if repo == "" {
+func New(repos []string, domain string, actions ...HookHandler) (*Responder, error) {
+	if len(repos) == 0 {
 		return nil, errors.New("must provide repo")
 	}
-	repoParts := strings.SplitN(repo, "/", 2)
-	if len(repoParts) != 2 {
-		return nil, errors.Errorf("invalid repo %s - need 'owner/repo' form", repo)
+
+	var repositories []repository
+	for _, r := range repos {
+		repoParts := strings.SplitN(r, "/", 2)
+		if len(repoParts) != 2 {
+			return nil, errors.Errorf("invalid repo %s - need 'owner/repo' form", r)
+		}
+		repositories = append(repositories, repository{repoParts[0], repoParts[1]})
 	}
 
 	// init callback URL
 	callbackURL := buildCallbackURL(domain)
 
-	// set random secret
+	// choose random secret
 	secret := fmt.Sprintf("%x", rand.Int63())
 
 	token := os.Getenv(ghtokName)
 	if token == "" {
 		return nil, errors.Errorf("GitHub API token missing - must set %s", ghtokName)
 	}
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	hc := &http.Client{Transport: &oauth2.Transport{Source: ts}}
 	client := github.NewClient(hc)
 
 	return &Responder{
 		ghclient:    client,
 		secret:      secret,
-		owner:       repoParts[0],
-		repo:        repoParts[1],
+		repos:       repositories,
 		domain:      domain,
 		callbackURL: callbackURL,
+		actions:     actions,
 	}, nil
 }
 
@@ -88,11 +95,12 @@ func buildCallbackURL(domain string) string {
 	return scheme + domain + "/gh-callback/" + u.String()
 }
 
-// Register a new webhook with repo. A cleanup function is returned when the hook
-// is successfully registered - this function must be called (usually deferred),
-// otherwise invalid webhooks will be left behind.
-func (r *Responder) Register(ctx context.Context, events []string, actions ...HookHandler) (func(), error) {
-	hook := &github.Hook{
+// Register a new webhook with the watched repositories for the listed events. A
+// cleanup function is returned when the hook is successfully registered - this
+// function must be called (usually deferred), otherwise invalid webhooks will be
+// left behind.
+func (r *Responder) Register(ctx context.Context, events []string) (func(), error) {
+	inHook := &github.Hook{
 		Events: events,
 		Config: map[string]interface{}{
 			"url":          r.callbackURL,
@@ -100,30 +108,38 @@ func (r *Responder) Register(ctx context.Context, events []string, actions ...Ho
 			"secret":       r.secret,
 		},
 	}
-	hook, resp, err := r.ghclient.Repositories.CreateHook(ctx, r.owner, r.repo, hook)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create hook")
-	}
-	if resp.StatusCode > 299 {
-		return nil, errors.Errorf("request failed with %s", resp.Status)
-	}
 
-	id := hook.GetID()
-	log.Info().
-		Str("hook_url", hook.GetURL()).
-		Int64("hook_id", id).
-		Str("callback", r.callbackURL).
-		Msg("Registered WebHook")
+	var unregFuncs []func()
+	for _, repo := range r.repos {
+		hook, resp, err := r.ghclient.Repositories.CreateHook(ctx, repo.owner, repo.name, inHook)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create hook")
+		}
+		if resp.StatusCode > 299 {
+			return nil, errors.Errorf("request failed with %s", resp.Status)
+		}
 
-	r.actions = actions
+		id := hook.GetID()
+		log.Info().
+			Str("hook_url", hook.GetURL()).
+			Int64("hook_id", id).
+			Str("callback", r.callbackURL).
+			Msg("Registered WebHook")
+
+		unregFuncs = append(unregFuncs, func() {
+			log := log.With().Int64("hook_id", id).Logger()
+			log.Info().Msg("Cleaning up webhook")
+			_, err := r.ghclient.Repositories.DeleteHook(ctx, repo.owner, repo.name, id)
+			if err != nil {
+				err = errors.Wrap(err, "failed to delete webhook")
+				log.Error().Err(err).Msg("failed to delete webhook")
+			}
+		})
+	}
 
 	unregister := func() {
-		log := log.With().Int64("hook_id", id).Logger()
-		log.Info().Msg("Cleaning up webhook")
-		_, err := r.ghclient.Repositories.DeleteHook(ctx, r.owner, r.repo, id)
-		if err != nil {
-			err = errors.Wrap(err, "failed to delete webhook")
-			log.Error().Err(err).Msg("failed to delete webhook")
+		for _, f := range unregFuncs {
+			f()
 		}
 	}
 	return unregister, nil
@@ -182,8 +198,8 @@ func (r *Responder) Listen(ctx context.Context) {
 
 // RegisterAndListen - unlike calling `Register` and `Listen` separately, this
 // will block while waiting for the context to be cancelled.
-func (r *Responder) RegisterAndListen(ctx context.Context, events []string, actions ...HookHandler) error {
-	cleanup, err := r.Register(ctx, events, actions...)
+func (r *Responder) RegisterAndListen(ctx context.Context, events []string) error {
+	cleanup, err := r.Register(ctx, events)
 	if err != nil {
 		return err
 	}
