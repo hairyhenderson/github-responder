@@ -24,6 +24,7 @@ var (
 	verbose  bool
 	repos    []string
 	events   []string
+	env      []string
 	domain   string
 )
 
@@ -55,7 +56,7 @@ func newCmd() *cobra.Command {
 
 			var action responder.HookHandler
 			if len(args) > 0 {
-				action = execArgs(args...)
+				action = execArgs(env, args...)
 			} else {
 				log.Info().Msg("No action command given, will perform default")
 				action = defaultAction
@@ -85,6 +86,8 @@ func initFlags(command *cobra.Command) {
 	command.Flags().StringVarP(&domain, "domain", "d", "", "domain to serve - a cert will be acquired for this domain")
 	command.Flags().StringVarP(&certmagic.Email, "email", "m", "", "Email used for registration and recovery contact (optional, but recommended)")
 	command.Flags().StringVar(&certmagic.CA, "ca", certmagic.LetsEncryptProductionCA, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
+
+	command.Flags().StringArrayVar(&env, "env", []string{}, "Set environment variables in KEY=value form. Omit =value to inherit current KEY value. By default, actions are executed with the parent environment.")
 
 	command.Flags().BoolVarP(&verbose, "verbose", "V", false, "Output extra logs")
 	command.Flags().BoolVarP(&printVer, "version", "v", false, "Print the version")
