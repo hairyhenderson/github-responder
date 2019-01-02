@@ -76,7 +76,7 @@ github.com/xenolf/lego/challenge/dns01
 github.com/xenolf/lego/platform/wait
 # github.com/zenazn/goji v0.9.0
 github.com/zenazn/goji/web/mutil
-# golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
+# golang.org/x/crypto v0.0.0-20190102183730-8d7daa0c54b3
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/ed25519
