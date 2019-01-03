@@ -12,8 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
@@ -176,7 +177,15 @@ func (r *Responder) Listen(ctx context.Context) {
 			Msgf("%s %s - %d", r.Method, r.URL, status)
 	}))
 
-	http.Handle("/metrics", c.Append(filterByIP).Extend(instrumentHTTP("metrics")).Then(promhttp.Handler()))
+	http.Handle("/metrics", c.Append(filterByIP).
+		Then(
+			promhttp.InstrumentMetricHandler(
+				MetricsRegisterer,
+				promhttp.HandlerFor(MetricsGatherer,
+					promhttp.HandlerOpts{},
+				),
+			),
+		))
 	http.Handle(getPath(r.callbackURL), c.Extend(instrumentHTTP("callback")).Then(r))
 	http.Handle("/", c.Extend(instrumentHTTP("default")).ThenFunc(denyHandler))
 

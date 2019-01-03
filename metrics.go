@@ -13,6 +13,14 @@ import (
 )
 
 var (
+	// MetricsRegisterer is the registry that this service's metrics will be collected
+	// by. Overwrite it to use a different registry.
+	MetricsRegisterer = prometheus.DefaultRegisterer
+
+	// MetricsGatherer is the registry that this service's metrics will be collected
+	// by. Overwrite it to use a different registry.
+	MetricsGatherer = prometheus.DefaultGatherer
+
 	ns            = "http"
 	httpLabels    = []string{"handler", "code", "method"}
 	durBuckets    = []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10}
@@ -61,7 +69,7 @@ func initMetrics() {
 	for _, m := range observers {
 		o = append(o, m)
 	}
-	prometheus.MustRegister(o...)
+	MetricsRegisterer.MustRegister(o...)
 }
 
 func instrumentHTTP(handler string) alice.Chain {
