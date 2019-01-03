@@ -21,7 +21,7 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.2.2
-	github.com/xenolf/lego v0.0.0-20181219212511-820c2b7531bc
+	github.com/xenolf/lego v0.0.0-20181219212511-820c2b7531bc // indirect
 	github.com/zenazn/goji v0.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
