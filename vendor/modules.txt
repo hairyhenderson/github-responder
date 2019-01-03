@@ -32,11 +32,11 @@ github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/internal
 # github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.0.0-20181126121408-4724e9255275
+# github.com/prometheus/common v0.0.0-20181218105931-67670fe90761
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
-# github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
+# github.com/prometheus/procfs v0.0.0-20190102135031-14fa7590c24d
 github.com/prometheus/procfs
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
@@ -76,7 +76,7 @@ github.com/xenolf/lego/challenge/dns01
 github.com/xenolf/lego/platform/wait
 # github.com/zenazn/goji v0.9.0
 github.com/zenazn/goji/web/mutil
-# golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
+# golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/ed25519
@@ -94,7 +94,7 @@ golang.org/x/net/internal/socket
 # golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20181229022217-9a3f9b0469bb
+# golang.org/x/sys v0.0.0-20190102155601-82a175fd1598
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
@@ -110,7 +110,7 @@ google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
-# gopkg.in/square/go-jose.v2 v2.2.1
+# gopkg.in/square/go-jose.v2 v2.2.2
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher
 gopkg.in/square/go-jose.v2/json
