@@ -17,20 +17,19 @@ jobs:
   #           - .
   test-vendoring:
     executor: build-executor
+    environment:
+      - GO111MODULE=on
+      - GOFLAGS=-mod=vendor
     steps:
       - checkout
-      # - attach_workspace:
-      #     at: /go
+      - run: go mod tidy
+      - run: go mod vendor
       - run:
-          name: test vendoring
+          name: ensure clean git repo
           command: |
-            export GO111MODULE=on
-            export GOFLAGS=-mod=vendor
-            go mod tidy && go mod vendor
-            if [ -n $(git status --porcelain=v2) ]; then
-              echo "not correctly vendored"
-              exit 1
-            fi
+            git status -sb
+            git diff
+            test -z "$(git status --porcelain=v2)"
   build:
     executor: build-executor
     steps:
