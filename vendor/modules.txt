@@ -30,11 +30,11 @@ github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/internal
 # github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.0.0-20181126121408-4724e9255275
+# github.com/prometheus/common v0.0.0-20181218105931-67670fe90761
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
-# github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
+# github.com/prometheus/procfs v0.0.0-20190102135031-14fa7590c24d
 github.com/prometheus/procfs
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
@@ -60,16 +60,16 @@ github.com/zenazn/goji/web/mutil
 # golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ocsp
-# golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
+# golang.org/x/net v0.0.0-20181220203305-927f97764cc3
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
 # golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20180824143301-4910a1d54f87
+# golang.org/x/sys v0.0.0-20190102155601-82a175fd1598
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# google.golang.org/appengine v1.1.0
+# google.golang.org/appengine v1.4.0
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/urlfetch
