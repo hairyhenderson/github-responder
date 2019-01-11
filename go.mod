@@ -25,7 +25,7 @@ require (
 	github.com/zenazn/goji v0.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
 	golang.org/x/net v0.0.0-20181220212706-927f97764cc3 // indirect
-	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
+	golang.org/x/oauth2 v0.0.0-20190111025821-fd3eaa146cbb
 	golang.org/x/sync v0.0.0-20181221202957-37e7f081c4d4 // indirect
 	golang.org/x/sys v0.0.0-20190102155601-82a175fd1598 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
