@@ -40,6 +40,7 @@ github.com/mholt/certmagic v0.0.0-20181219212511-a3b276a1b44e h1:4Gbbe25WFQuu7Yl
 github.com/mholt/certmagic v0.0.0-20181219212511-a3b276a1b44e/go.mod h1:09k100NW9m2nUn/lUB5JmCG1iFw0nEZ4HT0bdhDn9ns=
 github.com/mholt/certmagic v0.0.0-20190111173622-707b20497ed7/go.mod h1:09k100NW9m2nUn/lUB5JmCG1iFw0nEZ4HT0bdhDn9ns=
 github.com/mholt/certmagic v0.0.0-20190118175653-01ffe8b3c7d6/go.mod h1:09k100NW9m2nUn/lUB5JmCG1iFw0nEZ4HT0bdhDn9ns=
+github.com/mholt/certmagic v0.0.0-20190121183307-d95a4dbba8d2/go.mod h1:09k100NW9m2nUn/lUB5JmCG1iFw0nEZ4HT0bdhDn9ns=
 github.com/miekg/dns v1.1.1 h1:DVkblRdiScEnEr0LR9nTnEQqHYycjkXW9bOjd+2EL2o=
 github.com/miekg/dns v1.1.1/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.2/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=

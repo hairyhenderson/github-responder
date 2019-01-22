@@ -8,7 +8,7 @@ require (
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/mholt/certmagic v0.0.0-20190118175653-01ffe8b3c7d6
+	github.com/mholt/certmagic v0.0.0-20190121183307-d95a4dbba8d2
 	github.com/miekg/dns v1.1.3 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
