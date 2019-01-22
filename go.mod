@@ -14,7 +14,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/common v0.0.0-20190113174213-2998b132700a // indirect
-	github.com/prometheus/procfs v0.0.0-20190113183511-b1a0a9a36d74 // indirect
+	github.com/prometheus/procfs v0.0.0-20190122003334-bf6a532e95b1 // indirect
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/rs/zerolog v1.11.0
 	github.com/satori/go.uuid v1.2.0
