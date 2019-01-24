@@ -1,4 +1,4 @@
-FROM golang:1.11.5-alpine@sha256:535a0299a7d6b02bbeb8cfb9299dc97ff159781604b6a90ff3884f2e3c0b7a72 AS build
+FROM golang:1.11.5-alpine@sha256:11fa60e5e6208b40aa26723fb2dcbf8a3f9e8a79a41e75d3263d2c83c58357e0 AS build
 
 RUN apk add --no-cache \
     make \
