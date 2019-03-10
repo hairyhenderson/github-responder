@@ -38,8 +38,9 @@ github.com/prometheus/client_model/go
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
-# github.com/prometheus/procfs v0.0.0-20190122003334-bf6a532e95b1
+# github.com/prometheus/procfs v0.0.0-20190310235545-d0f344d83b0c
 github.com/prometheus/procfs
+github.com/prometheus/procfs/iostats
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
 github.com/prometheus/procfs/internal/util
