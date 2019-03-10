@@ -1,13 +1,14 @@
 package resolver
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"net"
 	"sort"
 	"strconv"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/acme/api"
 	"github.com/xenolf/lego/challenge"
@@ -21,7 +22,7 @@ type byType []acme.Challenge
 
 func (a byType) Len() int           { return len(a) }
 func (a byType) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byType) Less(i, j int) bool { return a[i].Type < a[j].Type }
+func (a byType) Less(i, j int) bool { return a[i].Type > a[j].Type }
 
 type SolverManager struct {
 	core    *api.Core
@@ -29,53 +30,10 @@ type SolverManager struct {
 }
 
 func NewSolversManager(core *api.Core) *SolverManager {
-	solvers := map[challenge.Type]solver{
-		challenge.HTTP01:    http01.NewChallenge(core, validate, &http01.ProviderServer{}),
-		challenge.TLSALPN01: tlsalpn01.NewChallenge(core, validate, &tlsalpn01.ProviderServer{}),
-	}
-
 	return &SolverManager{
-		solvers: solvers,
+		solvers: map[challenge.Type]solver{},
 		core:    core,
 	}
-}
-
-// SetHTTP01Address specifies a custom interface:port to be used for HTTP based challenges.
-// If this option is not used, the default port 80 and all interfaces will be used.
-// To only specify a port and no interface use the ":port" notation.
-//
-// NOTE: This REPLACES any custom HTTP provider previously set by calling
-// c.SetProvider with the default HTTP challenge provider.
-func (c *SolverManager) SetHTTP01Address(iface string) error {
-	host, port, err := net.SplitHostPort(iface)
-	if err != nil {
-		return err
-	}
-
-	if chlng, ok := c.solvers[challenge.HTTP01]; ok {
-		chlng.(*http01.Challenge).SetProvider(http01.NewProviderServer(host, port))
-	}
-
-	return nil
-}
-
-// SetTLSALPN01Address specifies a custom interface:port to be used for TLS based challenges.
-// If this option is not used, the default port 443 and all interfaces will be used.
-// To only specify a port and no interface use the ":port" notation.
-//
-// NOTE: This REPLACES any custom TLS-ALPN provider previously set by calling
-// c.SetProvider with the default TLS-ALPN challenge provider.
-func (c *SolverManager) SetTLSALPN01Address(iface string) error {
-	host, port, err := net.SplitHostPort(iface)
-	if err != nil {
-		return err
-	}
-
-	if chlng, ok := c.solvers[challenge.TLSALPN01]; ok {
-		chlng.(*tlsalpn01.Challenge).SetProvider(tlsalpn01.NewProviderServer(host, port))
-	}
-
-	return nil
 }
 
 // SetHTTP01Provider specifies a custom provider p that can solve the given HTTP-01 challenge.
@@ -96,18 +54,15 @@ func (c *SolverManager) SetDNS01Provider(p challenge.Provider, opts ...dns01.Cha
 	return nil
 }
 
-// Exclude explicitly removes challenges from the pool for solving.
-func (c *SolverManager) Exclude(challenges []challenge.Type) {
-	// Loop through all challenges and delete the requested one if found.
-	for _, chlg := range challenges {
-		delete(c.solvers, chlg)
-	}
+// Remove Remove a challenge type from the available solvers.
+func (c *SolverManager) Remove(chlgType challenge.Type) {
+	delete(c.solvers, chlgType)
 }
 
 // Checks all challenges from the server in order and returns the first matching solver.
 func (c *SolverManager) chooseSolver(authz acme.Authorization) solver {
 	// Allow to have a deterministic challenge order
-	sort.Sort(sort.Reverse(byType(authz.Challenges)))
+	sort.Sort(byType(authz.Challenges))
 
 	domain := challenge.GetTargetedDomain(authz)
 	for _, chlg := range authz.Challenges {
@@ -137,16 +92,35 @@ func validate(core *api.Core, domain string, chlg acme.Challenge) error {
 		return nil
 	}
 
+	ra, err := strconv.Atoi(chlng.RetryAfter)
+	if err != nil {
+		// The ACME server MUST return a Retry-After.
+		// If it doesn't, we'll just poll hard.
+		// Boulder does not implement the ability to retry challenges or the Retry-After header.
+		// https://github.com/letsencrypt/boulder/blob/master/docs/acme-divergences.md#section-82
+		ra = 5
+	}
+	initialInterval := time.Duration(ra) * time.Second
+
+	bo := backoff.NewExponentialBackOff()
+	bo.InitialInterval = initialInterval
+	bo.MaxInterval = 10 * initialInterval
+	bo.MaxElapsedTime = 100 * initialInterval
+
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// After the path is sent, the ACME server will access our server.
 	// Repeatedly check the server for an updated status on our request.
-	for {
+	operation := func() error {
 		authz, err := core.Authorizations.Get(chlng.AuthorizationURL)
 		if err != nil {
+			cancel()
 			return err
 		}
 
 		valid, err := checkAuthorizationStatus(authz)
 		if err != nil {
+			cancel()
 			return err
 		}
 
@@ -155,16 +129,10 @@ func validate(core *api.Core, domain string, chlg acme.Challenge) error {
 			return nil
 		}
 
-		ra, err := strconv.Atoi(chlng.RetryAfter)
-		if err != nil {
-			// The ACME server MUST return a Retry-After.
-			// If it doesn't, we'll just poll hard.
-			// Boulder does not implement the ability to retry challenges or the Retry-After header.
-			// https://github.com/letsencrypt/boulder/blob/master/docs/acme-divergences.md#section-82
-			ra = 5
-		}
-		time.Sleep(time.Duration(ra) * time.Second)
+		return errors.New("the server didn't respond to our request")
 	}
+
+	return backoff.Retry(operation, backoff.WithContext(bo, ctx))
 }
 
 func checkChallengeStatus(chlng acme.ExtendedChallenge) (bool, error) {
