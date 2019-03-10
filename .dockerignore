@@ -5,3 +5,4 @@ c.out
 *.iid
 *.cid
 *.tag
+Dockerfile
