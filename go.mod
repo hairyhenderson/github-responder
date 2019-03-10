@@ -59,7 +59,7 @@ require (
 	github.com/urfave/cli v1.20.0 // indirect
 	github.com/xenolf/lego v2.2.0+incompatible // indirect
 	github.com/zenazn/goji v0.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
+	golang.org/x/crypto v0.0.0-20190310234617-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190120214630-ed066c81e75e // indirect
 	golang.org/x/oauth2 v0.0.0-20190120233149-5dab4167f31c
 	golang.org/x/sync v0.0.0-20181221202957-37e7f081c4d4 // indirect
