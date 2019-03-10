@@ -33,7 +33,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/linode/linodego v0.7.1 // indirect
 	github.com/mholt/certmagic v0.0.0-20190121183307-d95a4dbba8d2
-	github.com/miekg/dns v1.1.3 // indirect
+	github.com/miekg/dns v1.1.5 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
