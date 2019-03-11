@@ -4,7 +4,7 @@ require (
 	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
 	github.com/coreos/go-iptables v0.4.0
 	github.com/golang/protobuf v1.3.0 // indirect
-	github.com/google/go-github/v20 v20.0.0
+	github.com/google/go-github/v24 v24.0.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/kr/pretty v0.1.0 // indirect
