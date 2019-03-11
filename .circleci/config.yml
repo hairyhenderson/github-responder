@@ -82,7 +82,7 @@ workflows:
   version: 2.1
   build-and-test:
     jobs:
-      - test-vendoring
+      # - test-vendoring
       - build
       - test:
           requires:
