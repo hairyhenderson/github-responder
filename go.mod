@@ -8,7 +8,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/mholt/certmagic v0.0.0-20190310020408-e3e89d1096d7
+	github.com/mholt/certmagic v0.0.0-20190420173101-8f7a1caa5908
 	github.com/miekg/dns v1.1.5 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
