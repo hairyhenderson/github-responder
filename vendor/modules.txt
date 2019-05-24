@@ -2,7 +2,7 @@
 github.com/beorn7/perks/quantile
 # github.com/cenkalti/backoff v2.1.1+incompatible
 github.com/cenkalti/backoff
-# github.com/coreos/go-iptables v0.4.0
+# github.com/coreos/go-iptables v0.4.1
 github.com/coreos/go-iptables/iptables
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
