@@ -94,7 +94,7 @@ golang.org/x/net/ipv6
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
-# golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
+# golang.org/x/oauth2 v0.0.0-20190604064949-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20190310054646-10058d7d4faa
