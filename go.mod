@@ -1,7 +1,7 @@
 module github.com/hairyhenderson/github-responder
 
 require (
-	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
+	github.com/cenkalti/backoff v3.0.0 // indirect
 	github.com/coreos/go-iptables v0.4.0
 	github.com/golang/protobuf v1.3.0 // indirect
 	github.com/google/go-github/v24 v24.0.1
