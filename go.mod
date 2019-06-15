@@ -2,11 +2,12 @@ module github.com/hairyhenderson/github-responder
 
 require (
 	github.com/coreos/go-iptables v0.4.1
+	github.com/go-acme/lego v2.6.0+incompatible // indirect
 	github.com/google/go-github/v24 v24.0.1
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/mholt/certmagic v0.0.0-20190310020408-e3e89d1096d7
+	github.com/mholt/certmagic v0.6.0
 	github.com/miekg/dns v1.1.14 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.4
