@@ -19,7 +19,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/google/go-github/v24/github"
+	"github.com/google/go-github/v26/github"
 	"github.com/justinas/alice"
 	"github.com/mholt/certmagic"
 	uuid "github.com/satori/go.uuid"
