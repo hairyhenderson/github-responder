@@ -3,7 +3,6 @@ module github.com/hairyhenderson/github-responder
 require (
 	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
 	github.com/coreos/go-iptables v0.4.0
-	github.com/golang/protobuf v1.3.0 // indirect
 	github.com/google/go-github/v24 v24.0.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
@@ -11,9 +10,7 @@ require (
 	github.com/mholt/certmagic v0.0.0-20190310020408-e3e89d1096d7
 	github.com/miekg/dns v1.1.5 // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
-	github.com/prometheus/procfs v0.0.0-20190306233201-d0f344d83b0c // indirect
+	github.com/prometheus/client_golang v0.9.4
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/rs/zerolog v1.12.0
 	github.com/satori/go.uuid v1.2.0
