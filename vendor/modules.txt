@@ -100,7 +100,7 @@ golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20190310054646-10058d7d4faa
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
+# golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
