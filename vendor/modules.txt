@@ -1,6 +1,6 @@
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
-# github.com/cenkalti/backoff v2.1.1+incompatible
+# github.com/cenkalti/backoff v0.0.0-20190506075156-2146c9339422
 github.com/cenkalti/backoff
 # github.com/coreos/go-iptables v0.4.0
 github.com/coreos/go-iptables/iptables
