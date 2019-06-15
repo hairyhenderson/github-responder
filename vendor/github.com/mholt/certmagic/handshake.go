@@ -25,7 +25,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/go-acme/lego/challenge/tlsalpn01"
+	"github.com/xenolf/lego/challenge/tlsalpn01"
 )
 
 // GetCertificate gets a certificate to satisfy clientHello. In getting
@@ -94,6 +94,12 @@ func (cfg *Config) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certif
 func (cfg *Config) getCertificate(hello *tls.ClientHelloInfo) (cert Certificate, matched, defaulted bool) {
 	name := NormalizedName(hello.ServerName)
 
+	cfg.certCache.mu.RLock()
+	defer cfg.certCache.mu.RUnlock()
+
+	var certKey string
+	var ok bool
+
 	if name == "" {
 		// if SNI is empty, prefer matching IP address
 		if hello.Conn != nil {
@@ -102,8 +108,9 @@ func (cfg *Config) getCertificate(hello *tls.ClientHelloInfo) (cert Certificate,
 			if err == nil {
 				addr = ip
 			}
-			cert, matched = cfg.selectCert(hello, addr)
-			if matched {
+			if certKey, ok = cfg.certificates[addr]; ok {
+				cert = cfg.certCache.cache[certKey]
+				matched = true
 				return
 			}
 		}
@@ -111,15 +118,17 @@ func (cfg *Config) getCertificate(hello *tls.ClientHelloInfo) (cert Certificate,
 		// fall back to a "default" certificate, if specified
 		if cfg.DefaultServerName != "" {
 			normDefault := NormalizedName(cfg.DefaultServerName)
-			cert, defaulted = cfg.selectCert(hello, normDefault)
-			if defaulted {
+			if certKey, ok := cfg.certificates[normDefault]; ok {
+				cert = cfg.certCache.cache[certKey]
+				defaulted = true
 				return
 			}
 		}
 	} else {
 		// if SNI is specified, try an exact match first
-		cert, matched = cfg.selectCert(hello, name)
-		if matched {
+		if certKey, ok = cfg.certificates[name]; ok {
+			cert = cfg.certCache.cache[certKey]
+			matched = true
 			return
 		}
 
@@ -129,8 +138,9 @@ func (cfg *Config) getCertificate(hello *tls.ClientHelloInfo) (cert Certificate,
 		for i := range labels {
 			labels[i] = "*"
 			candidate := strings.Join(labels, ".")
-			cert, matched = cfg.selectCert(hello, candidate)
-			if matched {
+			if certKey, ok = cfg.certificates[candidate]; ok {
+				cert = cfg.certCache.cache[certKey]
+				matched = true
 				return
 			}
 		}
@@ -143,10 +153,7 @@ func (cfg *Config) getCertificate(hello *tls.ClientHelloInfo) (cert Certificate,
 		// whether it complies with RFC 6066 about SNI, but I think
 		// it does, soooo...)
 		// (this is how we solved the former ACME TLS-SNI challenge)
-		cfg.certCache.mu.RLock()
-		directCert, ok := cfg.certCache.cache[name]
-		cfg.certCache.mu.RUnlock()
-		if ok {
+		if directCert, ok := cfg.certCache.cache[name]; ok {
 			cert = directCert
 			matched = true
 			return
@@ -161,22 +168,6 @@ func (cfg *Config) getCertificate(hello *tls.ClientHelloInfo) (cert Certificate,
 	// "0.0.0.0:443")
 
 	return
-}
-
-// selectCert uses hello to select a certificate from the
-// cache for name. If cfg.CertSelection is set, it will be
-// used to make the decision. Otherwise, the first matching
-// cert is returned.
-func (cfg *Config) selectCert(hello *tls.ClientHelloInfo, name string) (Certificate, bool) {
-	choices := cfg.certCache.getAllMatchingCerts(name)
-	if len(choices) == 0 {
-		return Certificate{}, false
-	}
-	if cfg.CertSelection == nil {
-		return choices[0], true
-	}
-	cert, err := cfg.CertSelection.SelectCertificate(hello, choices)
-	return cert, err == nil
 }
 
 // getCertDuringHandshake will get a certificate for hello. It first tries
@@ -325,7 +316,7 @@ func (cfg *Config) handshakeMaintenance(hello *tls.ClientHelloInfo, cert Certifi
 	if cert.OCSP != nil {
 		refreshTime := cert.OCSP.ThisUpdate.Add(cert.OCSP.NextUpdate.Sub(cert.OCSP.ThisUpdate) / 2)
 		if time.Now().After(refreshTime) {
-			err := stapleOCSP(cfg.Storage, &cert, nil)
+			err := cfg.certCache.stapleOCSP(&cert, nil)
 			if err != nil {
 				// An error with OCSP stapling is not the end of the world, and in fact, is
 				// quite common considering not all certs have issuer URLs that support it.
@@ -371,12 +362,15 @@ func (cfg *Config) renewDynamicCertificate(hello *tls.ClientHelloInfo, currentCe
 		// even though the recursive nature of the dynamic cert loading
 		// would just call this function anyway, we do it here to
 		// make the replacement as atomic as possible.
-		newCert, err := cfg.CacheManagedCertificate(name)
+		newCert, err := currentCert.configs[0].CacheManagedCertificate(name)
 		if err != nil {
 			log.Printf("[ERROR] loading renewed certificate for %s: %v", name, err)
 		} else {
 			// replace the old certificate with the new one
-			cfg.certCache.replaceCertificate(currentCert, newCert)
+			err = cfg.certCache.replaceCertificate(currentCert, newCert)
+			if err != nil {
+				log.Printf("[ERROR] Replacing certificate for %s: %v", name, err)
+			}
 		}
 	}
 
@@ -402,7 +396,7 @@ func (cfg *Config) renewDynamicCertificate(hello *tls.ClientHelloInfo, currentCe
 // A boolean true is returned if a valid certificate is returned.
 func (cfg *Config) tryDistributedChallengeSolver(clientHello *tls.ClientHelloInfo) (Certificate, bool, error) {
 	tokenKey := distributedSolver{config: cfg}.challengeTokensKey(clientHello.ServerName)
-	chalInfoBytes, err := cfg.Storage.Load(tokenKey)
+	chalInfoBytes, err := cfg.certCache.storage.Load(tokenKey)
 	if err != nil {
 		if _, ok := err.(ErrNotExist); ok {
 			return Certificate{}, false, nil
