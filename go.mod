@@ -5,7 +5,6 @@ require (
 	github.com/coreos/go-iptables v0.4.0
 	github.com/golang/protobuf v1.3.0 // indirect
 	github.com/google/go-github/v24 v24.0.1
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mholt/certmagic v0.0.0-20190310020408-e3e89d1096d7
@@ -17,8 +16,7 @@ require (
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/rs/zerolog v1.12.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/spf13/cobra v0.0.3
-	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.3.0
 	github.com/xenolf/lego v2.2.0+incompatible // indirect
 	github.com/zenazn/goji v0.9.0 // indirect
