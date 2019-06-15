@@ -60,7 +60,15 @@ func (p preCheck) checkDNSPropagation(fqdn, value string) (bool, error) {
 	}
 
 	if r.Rcode == dns.RcodeSuccess {
-		fqdn = updateDomainWithCName(r, fqdn)
+		// If we see a CNAME here then use the alias
+		for _, rr := range r.Answer {
+			if cn, ok := rr.(*dns.CNAME); ok {
+				if cn.Hdr.Name == fqdn {
+					fqdn = cn.Target
+					break
+				}
+			}
+		}
 	}
 
 	authoritativeNss, err := lookupNameservers(fqdn)

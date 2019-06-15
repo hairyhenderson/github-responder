@@ -124,10 +124,6 @@ func GenerateCSR(privateKey crypto.PrivateKey, domain string, san []string, must
 }
 
 func PEMEncode(data interface{}) []byte {
-	return pem.EncodeToMemory(PEMBlock(data))
-}
-
-func PEMBlock(data interface{}) *pem.Block {
 	var pemBlock *pem.Block
 	switch key := data.(type) {
 	case *ecdsa.PrivateKey:
@@ -141,7 +137,7 @@ func PEMBlock(data interface{}) *pem.Block {
 		pemBlock = &pem.Block{Type: "CERTIFICATE", Bytes: []byte(data.(DERCertificateBytes))}
 	}
 
-	return pemBlock
+	return pem.EncodeToMemory(pemBlock)
 }
 
 func pemDecode(data []byte) (*pem.Block, error) {

@@ -157,6 +157,11 @@ slow-lint:
 	# 		./tests/integration
 	# megacheck -tags integration ./tests/integration
 
-.PHONY: gen-changelog clean test build-x compress-all build-release build test-integration-docker gen-docs lint clean-images clean-containers docker-images
+update-deps:
+	@GO111MODULE=on go get -u
+	@GO111MODULE=on go mod tidy
+	@GO111MODULE=on GOFLAGS=-mod=vendor go mod vendor
+
+.PHONY: gen-changelog clean test build-x compress-all build-release build test-integration-docker gen-docs lint clean-images clean-containers docker-images update-deps
 .DELETE_ON_ERROR:
 .SECONDARY:

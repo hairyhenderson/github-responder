@@ -6,12 +6,27 @@ import (
 )
 import "sync/atomic"
 
+const (
+	// TimeFormatUnix defines a time format that makes time fields to be
+	// serialized as Unix timestamp integers.
+	TimeFormatUnix = ""
+
+	// TimeFormatUnix defines a time format that makes time fields to be
+	// serialized as Unix timestamp integers in milliseconds.
+	TimeFormatUnixMs = "UNIXMS"
+)
+
 var (
 	// TimestampFieldName is the field name used for the timestamp field.
 	TimestampFieldName = "time"
 
 	// LevelFieldName is the field name used for the level field.
 	LevelFieldName = "level"
+
+	// LevelFieldMarshalFunc allows customization of global level field marshaling
+	LevelFieldMarshalFunc = func(l Level) string {
+		return l.String()
+	}
 
 	// MessageFieldName is the field name used for the message field.
 	MessageFieldName = "message"
@@ -27,7 +42,7 @@ var (
 
 	// CallerMarshalFunc allows customization of global caller marshaling
 	CallerMarshalFunc = func(file string, line int) string {
-		return file+":"+strconv.Itoa(line)
+		return file + ":" + strconv.Itoa(line)
 	}
 
 	// ErrorStackFieldName is the field name used for error stacks.
@@ -41,9 +56,9 @@ var (
 		return err
 	}
 
-	// TimeFieldFormat defines the time format of the Time field type.
-	// If set to an empty string, the time is formatted as an UNIX timestamp
-	// as integer.
+	// TimeFieldFormat defines the time format of the Time field type. If set to
+	// TimeFormatUnix or TimeFormatUnixMs, the time is formatted as an UNIX
+	// timestamp as integer.
 	TimeFieldFormat = time.RFC3339
 
 	// TimestampFunc defines the function called to generate a timestamp.
