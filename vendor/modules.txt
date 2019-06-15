@@ -1,12 +1,29 @@
-# github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
+# github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
 # github.com/cenkalti/backoff v2.1.1+incompatible
 github.com/cenkalti/backoff
-# github.com/coreos/go-iptables v0.4.0
+# github.com/coreos/go-iptables v0.4.1
 github.com/coreos/go-iptables/iptables
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/golang/protobuf v1.3.0
+# github.com/go-acme/lego v2.6.0+incompatible
+github.com/go-acme/lego/acme
+github.com/go-acme/lego/certcrypto
+github.com/go-acme/lego/certificate
+github.com/go-acme/lego/challenge
+github.com/go-acme/lego/challenge/http01
+github.com/go-acme/lego/challenge/tlsalpn01
+github.com/go-acme/lego/lego
+github.com/go-acme/lego/registration
+github.com/go-acme/lego/acme/api
+github.com/go-acme/lego/log
+github.com/go-acme/lego/platform/wait
+github.com/go-acme/lego/challenge/resolver
+github.com/go-acme/lego/acme/api/internal/nonces
+github.com/go-acme/lego/acme/api/internal/secure
+github.com/go-acme/lego/acme/api/internal/sender
+github.com/go-acme/lego/challenge/dns01
+# github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 # github.com/google/go-github/v24 v24.0.1
 github.com/google/go-github/v24/github
@@ -16,37 +33,34 @@ github.com/google/go-querystring/query
 github.com/inconshreveable/mousetrap
 # github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 github.com/justinas/alice
-# github.com/klauspost/cpuid v1.2.0
+# github.com/klauspost/cpuid v1.2.1
 github.com/klauspost/cpuid
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/mholt/certmagic v0.0.0-20190310020408-e3e89d1096d7
+# github.com/mholt/certmagic v0.6.0
 github.com/mholt/certmagic
-# github.com/miekg/dns v1.1.5
+# github.com/miekg/dns v1.1.14
 github.com/miekg/dns
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
+# github.com/prometheus/client_golang v0.9.4
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/internal
 # github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.2.0
+# github.com/prometheus/common v0.4.1
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
-# github.com/prometheus/procfs v0.0.0-20190306233201-d0f344d83b0c
+# github.com/prometheus/procfs v0.0.2
 github.com/prometheus/procfs
-github.com/prometheus/procfs/iostats
-github.com/prometheus/procfs/nfs
-github.com/prometheus/procfs/xfs
-github.com/prometheus/procfs/internal/util
+github.com/prometheus/procfs/internal/fs
 # github.com/rs/xid v1.2.1
 github.com/rs/xid
-# github.com/rs/zerolog v1.12.0
+# github.com/rs/zerolog v1.14.3
 github.com/rs/zerolog
 github.com/rs/zerolog/hlog
 github.com/rs/zerolog/log
@@ -54,38 +68,21 @@ github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
 # github.com/satori/go.uuid v1.2.0
 github.com/satori/go.uuid
-# github.com/spf13/cobra v0.0.3
+# github.com/spf13/cobra v0.0.5
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
-# github.com/xenolf/lego v2.2.0+incompatible
-github.com/xenolf/lego/acme
-github.com/xenolf/lego/certcrypto
-github.com/xenolf/lego/certificate
-github.com/xenolf/lego/challenge
-github.com/xenolf/lego/challenge/http01
-github.com/xenolf/lego/challenge/tlsalpn01
-github.com/xenolf/lego/lego
-github.com/xenolf/lego/registration
-github.com/xenolf/lego/acme/api
-github.com/xenolf/lego/log
-github.com/xenolf/lego/platform/wait
-github.com/xenolf/lego/challenge/resolver
-github.com/xenolf/lego/acme/api/internal/nonces
-github.com/xenolf/lego/acme/api/internal/secure
-github.com/xenolf/lego/acme/api/internal/sender
-github.com/xenolf/lego/challenge/dns01
 # github.com/zenazn/goji v0.9.0
 github.com/zenazn/goji/web/mutil
-# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+# golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ocsp
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519/internal/edwards25519
-# golang.org/x/net v0.0.0-20190310074541-c10a0554eabf
+# golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
 golang.org/x/net/idna
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
@@ -94,18 +91,18 @@ golang.org/x/net/ipv6
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
-# golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
+# golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20190310054646-10058d7d4faa
+# golang.org/x/sys v0.0.0-20190614160838-b47fdc937951
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
+# golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
-# google.golang.org/appengine v1.4.0
+# google.golang.org/appengine v1.6.1
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/urlfetch
