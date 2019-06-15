@@ -20,7 +20,7 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.3.0
-	github.com/xenolf/lego v2.2.0+incompatible // indirect
+	github.com/xenolf/lego v2.6.0 // indirect
 	github.com/zenazn/goji v0.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190310074541-c10a0554eabf // indirect
