@@ -84,8 +84,8 @@ func initFlags(command *cobra.Command) {
 	command.Flags().IntVar(&certmagic.HTTPSPort, "https", 443, "Port to listen on for HTTPS traffic")
 
 	command.Flags().StringVarP(&domain, "domain", "d", "", "domain to serve - a cert will be acquired for this domain")
-	command.Flags().StringVarP(&certmagic.Email, "email", "m", "", "Email used for registration and recovery contact (optional, but recommended)")
-	command.Flags().StringVar(&certmagic.CA, "ca", certmagic.LetsEncryptProductionCA, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
+	command.Flags().StringVarP(&certmagic.Default.Email, "email", "m", "", "Email used for registration and recovery contact (optional, but recommended)")
+	command.Flags().StringVar(&certmagic.Default.CA, "ca", certmagic.LetsEncryptProductionCA, "URL to certificate authority's ACME server directory. Change this to point to a different server for testing.")
 
 	command.Flags().StringArrayVar(&env, "env", []string{}, "Set environment variables in KEY=value form. Omit =value to inherit current KEY value. By default, actions are executed with the parent environment.")
 
