@@ -8,7 +8,7 @@ require (
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mholt/certmagic v0.6.0
-	github.com/miekg/dns v1.1.14 // indirect
+	github.com/miekg/dns v1.1.15 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.4
 	github.com/rs/zerolog v1.14.3
