@@ -125,37 +125,7 @@ gen-changelog:
 		github_changelog_generator --no-filter-by-milestone --exclude-labels duplicate,question,invalid,wontfix,admin
 
 lint:
-	gometalinter -j $(LINT_PROCS) --vendor --disable-all \
-		--enable=gosec \
-		--enable=goconst \
-		--enable=gocyclo \
-		--enable=golint \
-		--enable=gotypex \
-		--enable=ineffassign \
-		--enable=vet \
-		--enable=vetshadow \
-		--enable=misspell \
-		--enable=goimports \
-		--enable=gofmt \
-		--enable=deadcode \
-		./...
-
-slow-lint:
-	gometalinter -j $(LINT_PROCS) --vendor --skip tests --deadline 120s \
-		--disable gotype \
-		--enable gofmt \
-		--enable goimports \
-		--enable misspell \
-			./...
-	# gometalinter -j $(LINT_PROCS) --vendor --deadline 120s \
-	# 	--disable gotype \
-	# 	--disable megacheck \
-	# 	--disable deadcode \
-	# 	--enable gofmt \
-	# 	--enable goimports \
-	# 	--enable misspell \
-	# 		./tests/integration
-	# megacheck -tags integration ./tests/integration
+	golangci-lint run ./...
 
 update-deps:
 	@GO111MODULE=on go get -u
