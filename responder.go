@@ -40,7 +40,6 @@ type Responder struct {
 	ghclient    *github.Client
 	secret      string
 	repos       []repository
-	events      []string
 	callbackURL string
 	actions     []HookHandler
 	domain      string
@@ -203,8 +202,6 @@ func (r *Responder) Listen(ctx context.Context) {
 		err := certmagic.HTTPS([]string{r.domain}, nil)
 		log.Error().Err(err).Msg("listening with certmagic")
 	}()
-
-	return
 }
 
 // RegisterAndListen - unlike calling `Register` and `Listen` separately, this
