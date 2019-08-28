@@ -1,7 +1,7 @@
 FROM alpine:3.8 AS upx
 RUN apk add --no-cache upx=3.94-r0
 
-FROM golang:1.12.9-alpine@sha256:17d6768b5757e158106bd23a8bb77ffe46a3321f26eace1d8d41d25252af9f67 AS build
+FROM golang:1.12.9-alpine@sha256:39f9d94d45e404c98c3aa3c9b2406185f46ffddefeb45cdd9b778024626302fc AS build
 
 RUN apk add --no-cache \
     make \
