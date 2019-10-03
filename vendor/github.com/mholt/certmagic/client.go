@@ -15,21 +15,23 @@
 package certmagic
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	weakrand "math/rand"
 	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/go-acme/lego/certificate"
-	"github.com/go-acme/lego/challenge"
-	"github.com/go-acme/lego/challenge/http01"
-	"github.com/go-acme/lego/challenge/tlsalpn01"
-	"github.com/go-acme/lego/lego"
-	"github.com/go-acme/lego/registration"
+	"github.com/go-acme/lego/v3/certificate"
+	"github.com/go-acme/lego/v3/challenge"
+	"github.com/go-acme/lego/v3/challenge/http01"
+	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v3/lego"
+	"github.com/go-acme/lego/v3/registration"
 )
 
 func init() {
@@ -65,10 +67,21 @@ func (cfg *Config) lockKey(op, domainName string) string {
 }
 
 func (cfg *Config) newManager(interactive bool) (Manager, error) {
-	if cfg.NewManager != nil {
-		return cfg.NewManager(interactive)
+	const maxTries = 3
+	var mgr Manager
+	var err error
+	for i := 0; i < maxTries; i++ {
+		if cfg.NewManager != nil {
+			mgr, err = cfg.NewManager(interactive)
+		} else {
+			mgr, err = cfg.newACMEClient(interactive)
+		}
+		if err == nil {
+			break
+		}
+		log.Printf("[ERROR] Making new certificate manager: %v (attempt %d/%d)", err, i+1, maxTries)
 	}
-	return cfg.newACMEClient(interactive)
+	return mgr, err
 }
 
 func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
@@ -122,6 +135,15 @@ func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
 		legoCfg.Certificate = lego.CertificateConfig{
 			KeyType: keyType,
 			Timeout: certObtainTimeout,
+		}
+		if cfg.TrustedRoots != nil {
+			if ht, ok := legoCfg.HTTPClient.Transport.(*http.Transport); ok {
+				if ht.TLSClientConfig == nil {
+					ht.TLSClientConfig = new(tls.Config)
+					ht.ForceAttemptHTTP2 = true
+				}
+				ht.TLSClientConfig.RootCAs = cfg.TrustedRoots
+			}
 		}
 		client, err = lego.NewClient(legoCfg)
 		if err != nil {
@@ -182,12 +204,12 @@ func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
 func (c *acmeClient) Obtain(name string) error {
 	// ensure idempotency of the obtain operation for this name
 	lockKey := c.config.lockKey("cert_acme", name)
-	err := c.config.Storage.Lock(lockKey)
+	err := obtainLock(c.config.Storage, lockKey)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if err := c.config.Storage.Unlock(lockKey); err != nil {
+		if err := releaseLock(c.config.Storage, lockKey); err != nil {
 			log.Printf("[ERROR][%s] Obtain: Unable to unlock '%s': %v", name, lockKey, err)
 		}
 	}()
@@ -199,6 +221,9 @@ func (c *acmeClient) Obtain(name string) error {
 	}
 
 	challenges := c.initialChallenges()
+	if len(challenges) == 0 {
+		log.Printf("[ERROR][%s] No challenge types enabled; obtain is doomed", name)
+	}
 	var chosenChallenge challenge.Type
 
 	// try while a challenge type is still available;
@@ -269,12 +294,12 @@ func (c *acmeClient) tryObtain(name string) error {
 func (c *acmeClient) Renew(name string) error {
 	// ensure idempotency of the renew operation for this name
 	lockKey := c.config.lockKey("cert_acme", name)
-	err := c.config.Storage.Lock(lockKey)
+	err := obtainLock(c.config.Storage, lockKey)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if err := c.config.Storage.Unlock(lockKey); err != nil {
+		if err := releaseLock(c.config.Storage, lockKey); err != nil {
 			log.Printf("[ERROR][%s] Renew: Unable to unlock '%s': %v", name, lockKey, err)
 		}
 	}()
@@ -292,6 +317,9 @@ func (c *acmeClient) Renew(name string) error {
 	}
 
 	challenges := c.initialChallenges()
+	if len(challenges) == 0 {
+		log.Printf("[ERROR][%s] No challenge types enabled; renew is doomed", name)
+	}
 	var chosenChallenge challenge.Type
 
 	// try while a challenge type is still available;
