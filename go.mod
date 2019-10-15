@@ -2,7 +2,7 @@ module github.com/hairyhenderson/github-responder
 
 require (
 	github.com/coreos/go-iptables v0.4.1
-	github.com/go-acme/lego v2.6.0+incompatible // indirect
+	github.com/go-acme/lego v2.7.2+incompatible // indirect
 	github.com/google/go-github/v26 v26.0.4
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/klauspost/cpuid v1.2.1 // indirect

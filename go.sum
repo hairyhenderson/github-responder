@@ -65,6 +65,8 @@ github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeME
 github.com/go-acme/lego v2.5.0+incompatible/go.mod h1:yzMNe9CasVUhkquNvti5nAtPmG94USbYxYrZfTkIn0M=
 github.com/go-acme/lego v2.6.0+incompatible h1:KxcEWOF5hKtgou4xIqPaXSRF9DoO4OJ90ndwdK6YH/k=
 github.com/go-acme/lego v2.6.0+incompatible/go.mod h1:yzMNe9CasVUhkquNvti5nAtPmG94USbYxYrZfTkIn0M=
+github.com/go-acme/lego v2.7.2+incompatible h1:ThhpPBgf6oa9X/vRd0kEmWOsX7+vmYdckmGZSb+FEp0=
+github.com/go-acme/lego v2.7.2+incompatible/go.mod h1:yzMNe9CasVUhkquNvti5nAtPmG94USbYxYrZfTkIn0M=
 github.com/go-acme/lego/v3 v3.0.2 h1:cnS+URiPzkt2pd7I2WlZtFyt2ihQ762nouBybY4djjw=
 github.com/go-acme/lego/v3 v3.0.2/go.mod h1:sMoLjf8BUo4Jexg+6Xw5KeFx98KVZ7Nfczh9tzLyhJU=
 github.com/go-errors/errors v1.0.1/go.mod h1:f4zRHt4oKfwPJE5k8C9vpYG+aDHdBFUsgrm6/TyX73Q=
