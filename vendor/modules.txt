@@ -31,7 +31,7 @@ github.com/google/go-github/v26/github
 github.com/google/go-querystring/query
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
+# github.com/justinas/alice v1.2.0
 github.com/justinas/alice
 # github.com/klauspost/cpuid v1.2.1
 github.com/klauspost/cpuid
