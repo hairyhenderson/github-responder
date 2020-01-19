@@ -7,7 +7,7 @@ require (
 	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/mholt/certmagic v0.7.3
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v0.9.4
 	github.com/rs/zerolog v1.15.0
 	github.com/satori/go.uuid v1.2.0
