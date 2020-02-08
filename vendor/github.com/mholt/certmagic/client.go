@@ -15,6 +15,8 @@
 package certmagic
 
 import (
+	"bytes"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -22,14 +24,14 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/go-acme/lego/v3/acme"
 	"github.com/go-acme/lego/v3/certificate"
 	"github.com/go-acme/lego/v3/challenge"
-	"github.com/go-acme/lego/v3/challenge/http01"
-	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
 	"github.com/go-acme/lego/v3/lego"
 	"github.com/go-acme/lego/v3/registration"
 )
@@ -37,9 +39,6 @@ import (
 func init() {
 	weakrand.Seed(time.Now().UnixNano())
 }
-
-// acmeMu ensures that only one ACME challenge occurs at a time.
-var acmeMu sync.Mutex
 
 // acmeClient is a wrapper over acme.Client with
 // some custom state attached. It is used to obtain,
@@ -66,10 +65,54 @@ func (cfg *Config) lockKey(op, domainName string) string {
 	return fmt.Sprintf("%s_%s_%s", op, domainName, cfg.CA)
 }
 
+// checkStorage tests the storage by writing random bytes
+// to a random key, and then loading those bytes and
+// comparing the loaded value. If this fails, the provided
+// cfg.Storage mechanism should not be used.
+func (cfg *Config) checkStorage() error {
+	key := fmt.Sprintf("rw_test_%d", weakrand.Int())
+	contents := make([]byte, 1024*10) // size sufficient for one or two ACME resources
+	_, err := weakrand.Read(contents)
+	if err != nil {
+		return err
+	}
+	err = cfg.Storage.Store(key, contents)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		deleteErr := cfg.Storage.Delete(key)
+		if deleteErr != nil {
+			log.Printf("[ERROR] Deleting test key %s from storage: %v", key, err)
+		}
+		// if there was no other error, make sure
+		// to return any error returned from Delete
+		if err == nil {
+			err = deleteErr
+		}
+	}()
+	loaded, err := cfg.Storage.Load(key)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(contents, loaded) {
+		return fmt.Errorf("load yielded different value than was stored; expected %d bytes, got %d bytes of differing elements", len(contents), len(loaded))
+	}
+	return nil
+}
+
 func (cfg *Config) newManager(interactive bool) (Manager, error) {
+	// ensure storage is writeable and readable
+	// TODO: this is not necessary every time; should only
+	// perform check once every so often for each storage,
+	// which may require some global state...
+	err := cfg.checkStorage()
+	if err != nil {
+		return nil, fmt.Errorf("failed storage check: %v - storage is probably misconfigured", err)
+	}
+
 	const maxTries = 3
 	var mgr Manager
-	var err error
 	for i := 0; i < maxTries; i++ {
 		if cfg.NewManager != nil {
 			mgr, err = cfg.NewManager(interactive)
@@ -79,17 +122,21 @@ func (cfg *Config) newManager(interactive bool) (Manager, error) {
 		if err == nil {
 			break
 		}
+		if acmeErr, ok := err.(acme.ProblemDetails); ok {
+			if acmeErr.HTTPStatus == http.StatusTooManyRequests {
+				log.Printf("[ERROR] Too many requests when making new ACME client: %+v - aborting", acmeErr)
+				return nil, err
+			}
+		}
 		log.Printf("[ERROR] Making new certificate manager: %v (attempt %d/%d)", err, i+1, maxTries)
+		time.Sleep(1 * time.Second)
 	}
 	return mgr, err
 }
 
 func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
-	// look up or create the user account
-	leUser, err := cfg.getUser(cfg.Email)
-	if err != nil {
-		return nil, err
-	}
+	acmeClientsMu.Lock()
+	defer acmeClientsMu.Unlock()
 
 	// ensure key type and timeout are set
 	keyType := cfg.KeyType
@@ -115,20 +162,22 @@ func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	if u.Scheme != "https" && !isLoopback(u.Host) && !isInternal(u.Host) {
 		return nil, fmt.Errorf("%s: insecure CA URL (HTTPS required)", caURL)
 	}
 
-	clientKey := caURL + leUser.Email + string(keyType)
+	// look up or create the user account
+	leUser, err := cfg.getUser(cfg.Email)
+	if err != nil {
+		return nil, err
+	}
 
-	// if an underlying client with this configuration already exists, reuse it
-	// TODO: Could this be a global cache instead, perhaps?
-	cfg.acmeClientsMu.Lock()
-	client, ok := cfg.acmeClients[clientKey]
+	// if a lego client with this configuration already exists, reuse it
+	clientKey := caURL + leUser.Email + string(keyType)
+	client, ok := acmeClients[clientKey]
 	if !ok {
 		// the client facilitates our communication with the CA server
-		legoCfg := lego.NewConfig(&leUser)
+		legoCfg := lego.NewConfig(leUser)
 		legoCfg.CADirURL = caURL
 		legoCfg.UserAgent = buildUAString()
 		legoCfg.HTTPClient.Timeout = HTTPTimeout
@@ -147,12 +196,10 @@ func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
 		}
 		client, err = lego.NewClient(legoCfg)
 		if err != nil {
-			cfg.acmeClientsMu.Unlock()
 			return nil, err
 		}
-		cfg.acmeClients[clientKey] = client
+		acmeClients[clientKey] = client
 	}
-	cfg.acmeClientsMu.Unlock()
 
 	// if not registered, the user must register an account
 	// with the CA and agree to terms
@@ -169,7 +216,7 @@ func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
 
 		reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: cfg.Agreed})
 		if err != nil {
-			return nil, fmt.Errorf("registration error: %v", err)
+			return nil, err
 		}
 		leUser.Registration = reg
 
@@ -201,7 +248,13 @@ func (cfg *Config) newACMEClient(interactive bool) (*acmeClient, error) {
 //
 // Callers who have access to a Config value should use the ObtainCert
 // method on that instead of this lower-level method.
-func (c *acmeClient) Obtain(name string) error {
+//
+// This method is throttled according to RateLimitOrders.
+func (c *acmeClient) Obtain(ctx context.Context, name string) error {
+	if err := c.throttle(ctx, "Obtain", name); err != nil {
+		return err
+	}
+
 	// ensure idempotency of the obtain operation for this name
 	lockKey := c.config.lockKey("cert_acme", name)
 	err := obtainLock(c.config.Storage, lockKey)
@@ -231,14 +284,14 @@ func (c *acmeClient) Obtain(name string) error {
 challengeLoop:
 	for len(challenges) > 0 {
 		chosenChallenge, challenges = c.nextChallenge(challenges)
-		const maxAttempts = 3
+		const maxAttempts = 2
 		for attempts := 0; attempts < maxAttempts; attempts++ {
 			err = c.tryObtain(name)
 			if err == nil {
 				break challengeLoop
 			}
-			log.Printf("[ERROR][%s] %v (attempt %d/%d; challenge=%s)",
-				name, err, attempts+1, maxAttempts, chosenChallenge)
+			log.Printf("[ERROR][%s] %s (attempt %d/%d; challenge=%s)",
+				name, strings.TrimSpace(err.Error()), attempts+1, maxAttempts, chosenChallenge)
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -263,9 +316,7 @@ func (c *acmeClient) tryObtain(name string) error {
 		Bundle:     true,
 		MustStaple: c.config.MustStaple,
 	}
-	acmeMu.Lock()
 	certificate, err := c.acmeClient.Certificate.Obtain(request)
-	acmeMu.Unlock()
 	if err != nil {
 		return fmt.Errorf("failed to obtain certificate: %v", err)
 	}
@@ -291,7 +342,13 @@ func (c *acmeClient) tryObtain(name string) error {
 //
 // Callers who have access to a Config value should use the RenewCert
 // method on that instead of this lower-level method.
-func (c *acmeClient) Renew(name string) error {
+//
+// This method is throttled according to RateLimitOrders.
+func (c *acmeClient) Renew(ctx context.Context, name string) error {
+	if err := c.throttle(ctx, "Renew", name); err != nil {
+		return err
+	}
+
 	// ensure idempotency of the renew operation for this name
 	lockKey := c.config.lockKey("cert_acme", name)
 	err := obtainLock(c.config.Storage, lockKey)
@@ -327,14 +384,15 @@ func (c *acmeClient) Renew(name string) error {
 challengeLoop:
 	for len(challenges) > 0 {
 		chosenChallenge, challenges = c.nextChallenge(challenges)
-		const maxAttempts = 3
+		const maxAttempts = 2
 		for attempts := 0; attempts < maxAttempts; attempts++ {
+			// TODO: consider moving throttle to here instead, the only potentially negative consequence is that the lock in storage may be persisted and get "stale" when it's actually not stale...
 			err = c.tryRenew(certRes)
 			if err == nil {
 				break challengeLoop
 			}
-			log.Printf("[ERROR][%s] %v (attempt %d/%d; challenge=%s)",
-				name, err, attempts+1, maxAttempts, chosenChallenge)
+			log.Printf("[ERROR][%s] %s (attempt %d/%d; challenge=%s)",
+				name, strings.TrimSpace(err.Error()), attempts+1, maxAttempts, chosenChallenge)
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -354,9 +412,7 @@ challengeLoop:
 // in storage if it succeeds. There are no retries here
 // and c must be fully configured already.
 func (c *acmeClient) tryRenew(certRes certificate.Resource) error {
-	acmeMu.Lock()
 	newCertMeta, err := c.acmeClient.Certificate.Renew(certRes, true, c.config.MustStaple)
-	acmeMu.Unlock()
 	if err != nil {
 		return fmt.Errorf("failed to renew certificate: %v", err)
 	}
@@ -377,7 +433,7 @@ func (c *acmeClient) tryRenew(certRes certificate.Resource) error {
 }
 
 // Revoke revokes the certificate for name and deletes it from storage.
-func (c *acmeClient) Revoke(name string) error {
+func (c *acmeClient) Revoke(_ context.Context, name string) error {
 	if !c.config.Storage.Exists(StorageKeys.SitePrivateKey(c.config.CA, name)) {
 		return fmt.Errorf("private key not found for %s", name)
 	}
@@ -466,7 +522,6 @@ func (c *acmeClient) nextChallenge(available []challenge.Type) (challenge.Type, 
 
 	switch randomChallenge {
 	case challenge.HTTP01:
-		// figure out which ports we'll be serving the challenge on
 		useHTTPPort := HTTPChallengePort
 		if HTTPPort > 0 && HTTPPort != HTTPChallengePort {
 			useHTTPPort = HTTPPort
@@ -475,34 +530,15 @@ func (c *acmeClient) nextChallenge(available []challenge.Type) (challenge.Type, 
 			useHTTPPort = c.config.AltHTTPPort
 		}
 
-		// If this machine is already listening on the HTTP or TLS-ALPN port
-		// designated for the challenges, then we need to handle the challenges
-		// a little differently: for HTTP, we will answer the challenge request
-		// using our own HTTP handler (the HandleHTTPChallenge function - this
-		// works only because challenge info is written to storage associated
-		// with c.config when the challenge is initiated); for TLS-ALPN, we will
-		// add the challenge cert to our cert cache and serve it up during the
-		// handshake. As for the default solvers...  we are careful to honor the
-		// listener bind preferences by using c.config.ListenHost.
-		var httpSolver challenge.Provider
-		if listenerAddressInUse(net.JoinHostPort(c.config.ListenHost, fmt.Sprintf("%d", useHTTPPort))) {
-			httpSolver = nil // assume that whatever's listening can solve the HTTP challenge
-		} else {
-			httpSolver = http01.NewProviderServer(c.config.ListenHost, fmt.Sprintf("%d", useHTTPPort))
-		}
-
-		// because of our nifty Storage interface, we can distribute the HTTP and
-		// TLS-ALPN challenges across all instances that share the same storage -
-		// in fact, this is required now for successful solving of the HTTP challenge
-		// if the port is already in use, since we must write the challenge info
-		// to storage for the HTTPChallengeHandler to solve it successfully
 		c.acmeClient.Challenge.SetHTTP01Provider(distributedSolver{
-			config:         c.config,
-			providerServer: httpSolver,
+			config: c.config,
+			providerServer: &httpSolver{
+				config:  c.config,
+				address: net.JoinHostPort(c.config.ListenHost, strconv.Itoa(useHTTPPort)),
+			},
 		})
 
 	case challenge.TLSALPN01:
-		// figure out which ports we'll be serving the challenge on
 		useTLSALPNPort := TLSALPNChallengePort
 		if HTTPSPort > 0 && HTTPSPort != TLSALPNChallengePort {
 			useTLSALPNPort = HTTPSPort
@@ -511,25 +547,42 @@ func (c *acmeClient) nextChallenge(available []challenge.Type) (challenge.Type, 
 			useTLSALPNPort = c.config.AltTLSALPNPort
 		}
 
-		// (see comments above for the HTTP challenge to gain an understanding of this chunk)
-		var alpnSolver challenge.Provider
-		if listenerAddressInUse(net.JoinHostPort(c.config.ListenHost, fmt.Sprintf("%d", useTLSALPNPort))) {
-			alpnSolver = tlsALPNSolver{certCache: c.config.certCache} // assume that our process is listening
-		} else {
-			alpnSolver = tlsalpn01.NewProviderServer(c.config.ListenHost, fmt.Sprintf("%d", useTLSALPNPort))
-		}
-
-		// (see comments above for the HTTP challenge to gain an understanding of this chunk)
 		c.acmeClient.Challenge.SetTLSALPN01Provider(distributedSolver{
-			config:         c.config,
-			providerServer: alpnSolver,
+			config: c.config,
+			providerServer: &tlsALPNSolver{
+				config:  c.config,
+				address: net.JoinHostPort(c.config.ListenHost, strconv.Itoa(useTLSALPNPort)),
+			},
 		})
 
 	case challenge.DNS01:
-		c.acmeClient.Challenge.SetDNS01Provider(c.config.DNSProvider)
+		if c.config.DNSChallengeOption != nil {
+			c.acmeClient.Challenge.SetDNS01Provider(c.config.DNSProvider, c.config.DNSChallengeOption)
+		} else {
+			c.acmeClient.Challenge.SetDNS01Provider(c.config.DNSProvider)
+		}
 	}
 
 	return randomChallenge, available
+}
+
+func (c *acmeClient) throttle(ctx context.Context, op, name string) error {
+	rateLimiterKey := c.config.CA + "," + c.config.Email
+	rateLimitersMu.Lock()
+	rl, ok := rateLimiters[rateLimiterKey]
+	if !ok {
+		rl = NewRateLimiter(RateLimitOrders, RateLimitOrdersWindow)
+		rateLimiters[rateLimiterKey] = rl
+		// TODO: stop rate limiter when it is garbage-collected...
+	}
+	rateLimitersMu.Unlock()
+	log.Printf("[INFO][%s] %s: Waiting on rate limiter...", name, op)
+	err := rl.Wait(ctx)
+	if err != nil {
+		return err
+	}
+	log.Printf("[INFO][%s] %s: Done waiting", name, op)
+	return nil
 }
 
 func buildUAString() string {
@@ -539,6 +592,62 @@ func buildUAString() string {
 	}
 	return ua
 }
+
+// These internal rate limits are designed to prevent accidentally
+// firehosing a CA's ACME endpoints. They are not intended to
+// replace or reimplement the CA's actual rate limits.
+//
+// Let's Encrypt's rate limits can be found here:
+// https://letsencrypt.org/docs/rate-limits/
+//
+// Currently (as of December 2019), Let's Encrypt's most relevant
+// rate limit for large deployments is 300 new orders per account
+// per 3 hours (on average, or best case, that's about 1 every 36
+// seconds, or 2 every 72 seconds, etc.); but it's not reasonable
+// to try to assume that our internal state is the same as the CA's
+// (due to process restarts, config changes, failed validations,
+// etc.) and ultimately, only the CA's actual rate limiter is the
+// authority. Thus, our own rate limiters do not attempt to enforce
+// external rate limits. Doing so causes problems when the domains
+// are not in our control (i.e. serving customer sites) and/or lots
+// of domains fail validation: they clog our internal rate limiter
+// and nearly starve out (or at least slow down) the other domains
+// that need certificates. Failed transactions are already retried
+// with exponential backoff, so adding in rate limiting can slow
+// things down even more.
+//
+// Instead, the point of our internal rate limiter is to avoid
+// hammering the CA's endpoint when there are thousands or even
+// millions of certificates under management. Our goal is to
+// allow small bursts in a relatively short timeframe so as to
+// not block any one domain for too long, without unleashing
+// thousands of requests to the CA at once.
+var (
+	rateLimiters   = make(map[string]*RingBufferRateLimiter)
+	rateLimitersMu sync.RWMutex
+
+	// RateLimitOrders is how many new ACME orders can be made per
+	// account in RateLimitNewOrdersWindow.
+	RateLimitOrders = 10
+
+	// RateLimitOrdersWindow is the size of the sliding
+	// window that throttles new ACME orders.
+	RateLimitOrdersWindow = 1 * time.Minute
+)
+
+// We keep a global cache of ACME clients so that they
+// can be reused. Since the number of CAs, accounts,
+// and key types should be fairly limited under best
+// practices, this map will hardly ever have more than
+// a few entries at the most. The associated lock
+// protects access to the map but also ensures that only
+// one ACME client is created at a time.
+// TODO: consider using storage for a distributed lock
+// TODO: consider evicting clients after some time
+var (
+	acmeClients   = make(map[string]*lego.Client)
+	acmeClientsMu sync.Mutex
+)
 
 // Some default values passed down to the underlying lego client.
 var (

@@ -324,6 +324,7 @@ func (cfg *Config) managedCertInStorageExpiresSoon(cert Certificate) (bool, erro
 // to the new cert. It assumes that the new certificate for oldCert.Names[0] is
 // already in storage.
 func (cfg *Config) reloadManagedCertificate(oldCert Certificate) error {
+	log.Printf("[INFO] Reloading managed certificate for %v", oldCert.Names)
 	newCert, err := cfg.loadManagedCertificate(oldCert.Names[0])
 	if err != nil {
 		return fmt.Errorf("loading managed certificate for %v from storage: %v", oldCert.Names, err)
@@ -338,7 +339,9 @@ func (cfg *Config) reloadManagedCertificate(oldCert Certificate) error {
 // not eligible because we cannot obtain certificates
 // for those names. Wildcard names are allowed, as long
 // as they conform to CABF requirements (only one wildcard
-// label, and it must be the left-most label).
+// label, and it must be the left-most label). Names with
+// certain special characters that are commonly accidental
+// are also rejected.
 func HostQualifies(hostname string) bool {
 	return hostname != "localhost" && // localhost is ineligible
 
@@ -353,6 +356,9 @@ func HostQualifies(hostname string) bool {
 		// must not start or end with a dot
 		!strings.HasPrefix(hostname, ".") &&
 		!strings.HasSuffix(hostname, ".") &&
+
+		// must not contain other common special characters
+		!strings.ContainsAny(hostname, "()[]{}<>\\/!@#$%^&|:;+='\"") &&
 
 		// cannot be an IP address, see
 		// https://community.letsencrypt.org/t/certificate-for-static-ip/84/2?u=mholt

@@ -15,6 +15,7 @@
 package certmagic
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -54,14 +55,15 @@ func (cfg *Config) GetCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certif
 				// should already have taken care of that when we made the tls.Config)
 				challengeCert, ok, err := cfg.tryDistributedChallengeSolver(clientHello)
 				if err != nil {
-					log.Printf("[ERROR][%s] TLS-ALPN: %v", clientHello.ServerName, err)
+					log.Printf("[ERROR][%s] TLS-ALPN challenge: %v", clientHello.ServerName, err)
 				}
 				if ok {
+					log.Printf("[INFO][%s] Served key authentication certificate (distributed TLS-ALPN challenge)", clientHello.ServerName)
 					return &challengeCert.Certificate, nil
 				}
-
 				return nil, fmt.Errorf("no certificate to complete TLS-ALPN challenge for SNI name: %s", clientHello.ServerName)
 			}
+			log.Printf("[INFO][%s] Served key authentication certificate (TLS-ALPN challenge)", clientHello.ServerName)
 			return &challengeCert.Certificate, nil
 		}
 	}
@@ -289,7 +291,7 @@ func (cfg *Config) obtainOnDemandCertificate(hello *tls.ClientHelloInfo) (Certif
 
 	// obtain the certificate
 	log.Printf("[INFO] Obtaining new certificate for %s", name)
-	err := cfg.ObtainCert(name, false)
+	err := cfg.ObtainCert(context.TODO(), name, false) // TODO: use a proper context
 
 	// immediately unblock anyone waiting for it; doing this in
 	// a defer would risk deadlock because of the recursive call
@@ -365,7 +367,7 @@ func (cfg *Config) renewDynamicCertificate(hello *tls.ClientHelloInfo, currentCe
 
 	// renew and reload the certificate
 	log.Printf("[INFO] Renewing certificate for %s", name)
-	err := cfg.RenewCert(name, false)
+	err := cfg.RenewCert(context.TODO(), name, false) // TODO: use a proper context
 	if err == nil {
 		// even though the recursive nature of the dynamic cert loading
 		// would just call this function anyway, we do it here to

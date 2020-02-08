@@ -60,8 +60,8 @@ func (u user) GetPrivateKey() crypto.PrivateKey {
 // user to disk or register it via ACME. If you want to use
 // a user account that might already exist, call getUser
 // instead. It does NOT prompt the user.
-func (cfg *Config) newUser(email string) (user, error) {
-	user := user{Email: email}
+func (cfg *Config) newUser(email string) (*user, error) {
+	user := &user{Email: email}
 	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		return user, fmt.Errorf("generating private key: %v", err)
@@ -82,7 +82,7 @@ func (cfg *Config) getEmail(allowPrompts bool) error {
 
 	// First try package default email
 	if leEmail == "" {
-		leEmail = Default.Email
+		leEmail = Default.Email // TODO: racey with line 108
 	}
 
 	// Then try to get most recent user email from storage
@@ -105,7 +105,7 @@ func (cfg *Config) getEmail(allowPrompts bool) error {
 
 	// save the email for later and ensure it is consistent
 	// for repeated use; then update cfg with the email
-	Default.Email = strings.TrimSpace(strings.ToLower(leEmail))
+	Default.Email = strings.TrimSpace(strings.ToLower(leEmail)) // TODO: this is racey with line 85
 	cfg.Email = Default.Email
 
 	return nil
@@ -162,16 +162,14 @@ func (cfg *Config) promptUserForEmail() (string, error) {
 // it will create a new one, but it does NOT save new
 // users to the disk or register them via ACME. It does
 // NOT prompt the user.
-func (cfg *Config) getUser(email string) (user, error) {
-	var user user
-
+func (cfg *Config) getUser(email string) (*user, error) {
 	regBytes, err := cfg.Storage.Load(StorageKeys.UserReg(cfg.CA, email))
 	if err != nil {
 		if _, ok := err.(ErrNotExist); ok {
 			// create a new user
 			return cfg.newUser(email)
 		}
-		return user, err
+		return nil, err
 	}
 	keyBytes, err := cfg.Storage.Load(StorageKeys.UserPrivateKey(cfg.CA, email))
 	if err != nil {
@@ -179,15 +177,16 @@ func (cfg *Config) getUser(email string) (user, error) {
 			// create a new user
 			return cfg.newUser(email)
 		}
-		return user, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(regBytes, &user)
+	var u *user
+	err = json.Unmarshal(regBytes, &u)
 	if err != nil {
-		return user, err
+		return u, err
 	}
-	user.key, err = decodePrivateKey(keyBytes)
-	return user, err
+	u.key, err = decodePrivateKey(keyBytes)
+	return u, err
 }
 
 // saveUser persists a user's key and account registration
@@ -195,7 +194,7 @@ func (cfg *Config) getUser(email string) (user, error) {
 // or prompt the user. You must also pass in the storage
 // wherein the user should be saved. It should be the storage
 // for the CA with which user has an account.
-func (cfg *Config) saveUser(user user) error {
+func (cfg *Config) saveUser(user *user) error {
 	regBytes, err := json.MarshalIndent(&user, "", "\t")
 	if err != nil {
 		return err
