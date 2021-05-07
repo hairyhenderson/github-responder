@@ -1,6 +1,6 @@
 # github-responder
 
-[![Build Status][circleci-image]][circleci-url]
+![Build](https://github.com/hairyhenderson/github-responder/workflows/Build/badge.svg)
 [![hairyhenderson/github-responder on DockerHub][dockerhub-image]][dockerhub-url]
 
 A library & CLI tool that automatically sets up GitHub WebHooks and listens for events, with automatic TLS provided by [certmagic][].
@@ -36,8 +36,6 @@ A few more details:
 
 Copyright (c) 2018 Dave Henderson
 
-[circleci-image]: https://circleci.com/gh/hairyhenderson/github-responder/tree/master.svg?style=shield
-[circleci-url]: https://circleci.com/gh/hairyhenderson/github-responder/tree/master
 [dockerhub-image]: https://img.shields.io/badge/docker-ready-blue.svg
 [dockerhub-url]: https://hub.docker.com/r/hairyhenderson/github-responder
 
