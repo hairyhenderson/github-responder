@@ -4,7 +4,6 @@ GO := go
 PKG_NAME := github-responder
 PREFIX := .
 GO111MODULE := on
-GOFLAGS := -mod=vendor
 DOCKER_BUILDKIT ?= 1
 
 DOCKER_REPO ?= hairyhenderson/github-responder
