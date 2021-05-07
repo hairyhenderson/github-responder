@@ -21,8 +21,8 @@ import (
 
 	"github.com/caddyserver/certmagic"
 	"github.com/google/go-github/v35/github"
+	"github.com/google/uuid"
 	"github.com/justinas/alice"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/oauth2"
 )
 
@@ -85,7 +85,7 @@ func New(repos []string, domain string, actions ...HookHandler) (*Responder, err
 }
 
 func buildCallbackURL(domain string) string {
-	u := uuid.NewV4()
+	u := uuid.New()
 	var scheme string
 	if tlsDisabled() {
 		scheme = "http://"

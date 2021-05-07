@@ -6,11 +6,11 @@ require (
 	github.com/caddyserver/certmagic v0.13.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/google/go-github/v35 v35.2.0
+	github.com/google/uuid v1.0.0
 	github.com/justinas/alice v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.10.0
 	github.com/rs/zerolog v1.21.0
-	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
