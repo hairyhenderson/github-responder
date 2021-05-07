@@ -19,9 +19,9 @@ import (
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/google/go-github/v26/github"
+	"github.com/caddyserver/certmagic"
+	"github.com/google/go-github/v35/github"
 	"github.com/justinas/alice"
-	"github.com/mholt/certmagic"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/oauth2"
 )
