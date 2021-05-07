@@ -125,7 +125,11 @@ gen-changelog:
 		github_changelog_generator --no-filter-by-milestone --exclude-labels duplicate,question,invalid,wontfix,admin
 
 lint:
-	golangci-lint run ./...
+	@golangci-lint run --verbose --max-same-issues=0 --max-issues-per-linter=0 --sort-results
+
+ci-lint:
+	@golangci-lint run --verbose --max-same-issues=0 --max-issues-per-linter=0 --sort-results --out-format=github-actions
+
 
 update-deps:
 	@GO111MODULE=on go get -u
