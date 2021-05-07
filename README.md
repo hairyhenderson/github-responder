@@ -40,4 +40,4 @@ Copyright (c) 2018 Dave Henderson
 [dockerhub-url]: https://hub.docker.com/r/hairyhenderson/github-responder
 
 [Let's Encrypt]: https://letsencrypt.org
-[certmagic]: https://github.com/mholt/certmagic
+[certmagic]: https://github.com/caddyserver/certmagic
