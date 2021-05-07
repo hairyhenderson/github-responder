@@ -1,7 +1,7 @@
 FROM alpine:3.8 AS upx
 RUN apk add --no-cache upx=3.94-r0
 
-FROM golang:1.13.1-alpine@sha256:483ab69016be0d2c2176d0719da8854579fe1849a5d9975b32cbe7432ca9b038 AS build
+FROM golang:1.16.4-alpine AS build
 
 RUN apk add --no-cache \
     make \
@@ -49,7 +49,7 @@ LABEL org.opencontainers.image.revision=$VCS_REF \
 
 ENTRYPOINT [ "/github-responder" ]
 
-FROM alpine:3.9 AS alpine
+FROM alpine:3.13.5 AS alpine
 
 ARG OS=linux
 ARG ARCH=amd64

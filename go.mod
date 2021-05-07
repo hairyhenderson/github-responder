@@ -1,23 +1,18 @@
 module github.com/hairyhenderson/github-responder
 
-require (
-	github.com/coreos/go-iptables v0.4.1
-	github.com/go-acme/lego v2.6.0+incompatible // indirect
-	github.com/google/go-github/v26 v26.0.4
-	github.com/justinas/alice v0.0.0-20171023064455-03f45bd4b7da
-	github.com/klauspost/cpuid v1.2.1 // indirect
-	github.com/mholt/certmagic v0.7.3
-	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.4
-	github.com/rs/zerolog v1.15.0
-	github.com/satori/go.uuid v1.2.0
-	github.com/spf13/cobra v0.0.5
-	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980 // indirect
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20190614160838-b47fdc937951 // indirect
-	google.golang.org/appengine v1.6.1 // indirect
-)
+go 1.16
 
-go 1.13
+require (
+	github.com/caddyserver/certmagic v0.13.1
+	github.com/coreos/go-iptables v0.6.0
+	github.com/google/go-github/v35 v35.2.0
+	github.com/justinas/alice v1.2.0
+	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.10.0
+	github.com/rs/zerolog v1.21.0
+	github.com/satori/go.uuid v1.2.0
+	github.com/spf13/cobra v1.1.3
+	github.com/stretchr/testify v1.7.0
+	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+)
