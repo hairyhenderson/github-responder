@@ -85,14 +85,14 @@ func New(repos []string, domain string, actions ...HookHandler) (*Responder, err
 }
 
 func buildCallbackURL(domain string) string {
-	u := uuid.New()
+	u := uuid.NewString()
 	var scheme string
 	if tlsDisabled() {
 		scheme = "http://"
 	} else {
 		scheme = "https://"
 	}
-	return scheme + domain + "/gh-callback/" + u.String()
+	return scheme + domain + "/gh-callback/" + u
 }
 
 // Register a new webhook with the watched repositories for the listed events. A
