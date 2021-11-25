@@ -1,12 +1,12 @@
 package responder
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
 
 	"github.com/justinas/alice"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
@@ -89,7 +89,7 @@ func instrumentHTTP(handler string) alice.Chain {
 				return promhttp.InstrumentHandlerResponseSize(v.MustCurryWith(l), next)
 			})
 		} else {
-			panic(errors.Errorf("bad metric name %s", k))
+			panic(fmt.Errorf("bad metric name %s", k))
 		}
 	}
 	return chain

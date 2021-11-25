@@ -2,10 +2,9 @@ package iptables
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -18,9 +17,9 @@ func getGitHubMeta() (*ghMeta, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, errors.Errorf("couldn't reach github meta endpoint %s: status %d (%s)", githubMeta, resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("couldn't reach github meta endpoint %s: status %d (%s)", githubMeta, resp.StatusCode, resp.Status)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

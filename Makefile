@@ -27,9 +27,7 @@ GOOS ?= $(shell go version | sed 's/^.*\ \([a-z0-9]*\)\/\([a-z0-9]*\)/\1/')
 GOARCH ?= $(shell go version | sed 's/^.*\ \([a-z0-9]*\)\/\([a-z0-9]*\)/\2/')
 
 # platforms := linux-amd64 linux-arm linux-arm64 darwin-amd64 windows-amd64.exe
-# compressed-platforms := linux-amd64-slim linux-arm-slim linux-arm64-slim darwin-amd64-slim windows-amd64-slim.exe
 platforms := linux-amd64
-compressed-platforms := linux-amd64-slim
 
 clean:
 	rm -Rf $(PREFIX)/bin/*
@@ -37,29 +35,14 @@ clean:
 
 build-x: $(patsubst %,$(PREFIX)/bin/$(PKG_NAME)_%,$(platforms))
 
-compress-all: $(patsubst %,$(PREFIX)/bin/$(PKG_NAME)_%,$(compressed-platforms))
-
-$(PREFIX)/bin/$(PKG_NAME)_%-slim: $(PREFIX)/bin/$(PKG_NAME)_%
-	-@rm $@
-	upx --lzma $< -o $@
-
-$(PREFIX)/bin/$(PKG_NAME)_%-slim.exe: $(PREFIX)/bin/$(PKG_NAME)_%.exe
-	-@rm $@
-	upx --lzma $< -o $@
-
 $(PREFIX)/bin/$(PKG_NAME)_%_checksum.txt: $(PREFIX)/bin/$(PKG_NAME)_%
 	@sha256sum $< > $@
 
-$(PREFIX)/bin/checksums.txt: \
-		$(patsubst %,$(PREFIX)/bin/$(PKG_NAME)_%_checksum.txt,$(platforms)) \
-		$(patsubst %,$(PREFIX)/bin/$(PKG_NAME)_%_checksum.txt,$(compressed-platforms))
+$(PREFIX)/bin/checksums.txt: $(patsubst %,$(PREFIX)/bin/$(PKG_NAME)_%_checksum.txt,$(platforms))
 	@cat $^ > $@
 
 $(PREFIX)/%.signed: $(PREFIX)/%
 	@keybase sign < $< > $@
-
-compress: $(PREFIX)/bin/$(PKG_NAME)_$(GOOS)-$(GOARCH)-slim$(call extension,$(GOOS))
-	cp $< $(PREFIX)/bin/$(PKG_NAME)-slim$(call extension,$(GOOS))
 
 %.iid: Dockerfile
 	@docker build \
@@ -71,10 +54,6 @@ compress: $(PREFIX)/bin/$(PKG_NAME)_$(GOOS)-$(GOARCH)-slim$(call extension,$(GOO
 		.
 
 v%-alpine.tag: alpine.iid
-	@docker tag $(shell cat $^) $(DOCKER_REPO):$(subst .tag,,$@)
-	@echo $(DOCKER_REPO):$(subst .tag,,$@) > $@
-
-v%-slim.tag: slim.iid
 	@docker tag $(shell cat $^) $(DOCKER_REPO):$(subst .tag,,$@)
 	@echo $(DOCKER_REPO):$(subst .tag,,$@) > $@
 
@@ -92,7 +71,7 @@ v%.tag: latest.iid
 build-release: artifacts.cid
 	@docker cp $(shell cat $<):/bin/. bin/
 
-docker-images: $(PKG_NAME).iid $(PKG_NAME)-slim.iid
+docker-images: $(PKG_NAME).iid
 
 $(PREFIX)/bin/$(PKG_NAME)_%: $(shell find $(PREFIX) -type f -name '*.go')
 	GOOS=$(shell echo $* | cut -f1 -d-) GOARCH=$(shell echo $* | cut -f2 -d- | cut -f1 -d.) CGO_ENABLED=0 \
@@ -129,12 +108,6 @@ lint:
 ci-lint:
 	@golangci-lint run --verbose --max-same-issues=0 --max-issues-per-linter=0 --sort-results --out-format=github-actions
 
-
-update-deps:
-	@GO111MODULE=on go get -u
-	@GO111MODULE=on go mod tidy
-	@GO111MODULE=on GOFLAGS=-mod=vendor go mod vendor
-
-.PHONY: gen-changelog clean test build-x compress-all build-release build test-integration-docker gen-docs lint clean-images clean-containers docker-images update-deps
+.PHONY: gen-changelog clean test build-x build-release build test-integration-docker gen-docs lint clean-images clean-containers docker-images update-deps
 .DELETE_ON_ERROR:
 .SECONDARY:
