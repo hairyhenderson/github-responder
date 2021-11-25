@@ -14,7 +14,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
@@ -48,14 +47,14 @@ type Responder struct {
 // New -
 func New(repos []string, domain string, actions ...HookHandler) (*Responder, error) {
 	if len(repos) == 0 {
-		return nil, errors.New("must provide repo")
+		return nil, fmt.Errorf("must provide repo")
 	}
 
 	var repositories []repository
 	for _, r := range repos {
 		repoParts := strings.SplitN(r, "/", 2)
 		if len(repoParts) != 2 {
-			return nil, errors.Errorf("invalid repo %s - need 'owner/repo' form", r)
+			return nil, fmt.Errorf("invalid repo %s - need 'owner/repo' form", r)
 		}
 		repositories = append(repositories, repository{repoParts[0], repoParts[1]})
 	}
@@ -68,7 +67,7 @@ func New(repos []string, domain string, actions ...HookHandler) (*Responder, err
 
 	token := os.Getenv(ghtokName)
 	if token == "" {
-		return nil, errors.Errorf("GitHub API token missing - must set %s", ghtokName)
+		return nil, fmt.Errorf("GitHub API token missing - must set %s", ghtokName)
 	}
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	hc := &http.Client{Transport: &oauth2.Transport{Source: ts}}
@@ -115,10 +114,10 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 		repoName := repo.name
 		hook, resp, err := r.ghclient.Repositories.CreateHook(ctx, owner, repoName, inHook)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create hook")
+			return nil, fmt.Errorf("failed to create hook: %w", err)
 		}
 		if resp.StatusCode > 299 {
-			return nil, errors.Errorf("request failed with %s", resp.Status)
+			return nil, fmt.Errorf("request failed with %s", resp.Status)
 		}
 
 		id := hook.GetID()
@@ -133,8 +132,8 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 			log.Info().Msg("Cleaning up webhook")
 			_, err := r.ghclient.Repositories.DeleteHook(ctx, owner, repoName, id)
 			if err != nil {
-				err = errors.Wrap(err, "failed to delete webhook")
-				log.Error().Err(err).Msg("failed to delete webhook")
+				err = fmt.Errorf("failed to delete webhook: %w", err)
+				log.Error().Err(err).Send()
 			}
 		})
 	}

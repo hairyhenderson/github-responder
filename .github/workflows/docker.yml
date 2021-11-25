@@ -11,4 +11,4 @@ jobs:
     - uses: actions/checkout@v2.4.0
     - name: Docker images
       run: |
-        make artifacts.tag latest.tag alpine.tag slim.tag
+        make artifacts.tag latest.tag alpine.tag

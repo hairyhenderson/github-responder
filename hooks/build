@@ -17,13 +17,6 @@ make artifacts.tag
 make ${DOCKER_TAG}.tag
 
 if [ "$DOCKER_TAG" == "latest" ]; then
-  export SLIM_TAG="slim"
-else
-  export SLIM_TAG="${DOCKER_TAG}-slim"
-fi
-make ${SLIM_TAG}.tag
-
-if [ "$DOCKER_TAG" == "latest" ]; then
   export ALPINE_TAG="alpine"
 else
   export ALPINE_TAG="${DOCKER_TAG}-alpine"

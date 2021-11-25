@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-
-	"github.com/pkg/errors"
 )
 
 type ghMeta struct {
@@ -81,7 +79,7 @@ func (i *IPAddr) UnmarshalJSON(b []byte) error {
 
 	ip := net.ParseIP(s)
 	if ip == nil {
-		return errors.Errorf("invalid IP format %v", ip)
+		return fmt.Errorf("invalid IP format %v", ip)
 	}
 	*i = IPAddr{net.IPAddr{
 		IP:   ip,
