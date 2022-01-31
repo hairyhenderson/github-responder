@@ -8,7 +8,7 @@ require (
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
 	github.com/justinas/alice v1.2.0
-	github.com/prometheus/client_golang v1.12.0
+	github.com/prometheus/client_golang v1.12.1
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
