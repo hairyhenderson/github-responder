@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.12.2
-	github.com/rs/zerolog v1.26.1
+	github.com/rs/zerolog v1.27.0
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.2
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
@@ -25,6 +25,8 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.11 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mholt/acmez v1.0.2 // indirect
 	github.com/miekg/dns v1.1.46 // indirect
