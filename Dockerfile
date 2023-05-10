@@ -39,7 +39,7 @@ LABEL org.opencontainers.image.revision=$VCS_REF \
 
 ENTRYPOINT [ "/github-responder" ]
 
-FROM alpine:3.17 AS alpine
+FROM alpine:3.18 AS alpine
 
 ARG OS=linux
 ARG ARCH=amd64
