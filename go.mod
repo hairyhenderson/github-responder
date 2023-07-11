@@ -3,7 +3,7 @@ module github.com/hairyhenderson/github-responder
 go 1.19
 
 require (
-	github.com/caddyserver/certmagic v0.18.2
+	github.com/caddyserver/certmagic v0.19.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
@@ -38,6 +38,7 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
