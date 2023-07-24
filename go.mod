@@ -3,7 +3,7 @@ module github.com/hairyhenderson/github-responder
 go 1.19
 
 require (
-	github.com/caddyserver/certmagic v0.19.0
+	github.com/caddyserver/certmagic v0.19.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
