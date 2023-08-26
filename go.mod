@@ -6,7 +6,7 @@ require (
 	github.com/caddyserver/certmagic v0.19.2
 	github.com/coreos/go-iptables v0.7.0
 	github.com/google/go-github/v35 v35.3.0
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rs/zerolog v1.30.0
