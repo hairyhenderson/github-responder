@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.16.0
-	github.com/rs/zerolog v1.30.0
+	github.com/rs/zerolog v1.31.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.12.0
@@ -27,7 +27,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mholt/acmez v1.2.0 // indirect
 	github.com/miekg/dns v1.1.55 // indirect
