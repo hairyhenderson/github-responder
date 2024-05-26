@@ -4,20 +4,20 @@ updates:
   directory: "/"
   schedule:
     interval: daily
-    time: "02:00"
-    timezone: Canada/Eastern
   open-pull-requests-limit: 10
+  commit-message:
+    prefix: deps(actions)
 - package-ecosystem: gomod
   directory: "/"
   schedule:
     interval: daily
-    time: "02:00"
-    timezone: Canada/Eastern
   open-pull-requests-limit: 10
+  commit-message:
+    prefix: deps(go)
 - package-ecosystem: docker
   directory: "/"
   schedule:
     interval: daily
-    time: "02:00"
-    timezone: Canada/Eastern
   open-pull-requests-limit: 10
+  commit-message:
+    prefix: deps(docker)
