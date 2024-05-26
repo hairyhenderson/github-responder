@@ -71,6 +71,7 @@ func TestGhMeta(t *testing.T) {
 			must(NewIPNet("127.0.0.0/24")),
 		},
 	}
+
 	a, err := json.Marshal(g)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"hooks":["127.0.0.0/24"]}`, string(a))
@@ -80,5 +81,6 @@ func must(i *IPNet, err error) *IPNet {
 	if err != nil {
 		panic(err)
 	}
+
 	return i
 }

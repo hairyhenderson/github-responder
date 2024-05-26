@@ -2,6 +2,7 @@ package responder
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -12,16 +13,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
-	"github.com/rs/zerolog/log"
-
+	"filippo.io/mostly-harmless/cryptosource"
 	"github.com/caddyserver/certmagic"
 	"github.com/google/go-github/v35/github"
 	"github.com/google/uuid"
 	"github.com/justinas/alice"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/hlog"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
@@ -36,26 +36,28 @@ type repository struct {
 
 // Responder -
 type Responder struct {
-	ghclient    *github.Client
 	secret      string
-	repos       []repository
 	callbackURL string
-	actions     []HookHandler
 	domain      string
+	ghclient    *github.Client
+	repos       []repository
+	actions     []HookHandler
 }
 
 // New -
 func New(repos []string, domain string, actions ...HookHandler) (*Responder, error) {
 	if len(repos) == 0 {
-		return nil, fmt.Errorf("must provide repo")
+		return nil, errors.New("must provide repo")
 	}
 
-	var repositories []repository
+	repositories := make([]repository, 0, len(repos))
+
 	for _, r := range repos {
 		repoParts := strings.SplitN(r, "/", 2)
 		if len(repoParts) != 2 {
 			return nil, fmt.Errorf("invalid repo %s - need 'owner/repo' form", r)
 		}
+
 		repositories = append(repositories, repository{repoParts[0], repoParts[1]})
 	}
 
@@ -63,12 +65,15 @@ func New(repos []string, domain string, actions ...HookHandler) (*Responder, err
 	callbackURL := buildCallbackURL(domain)
 
 	// choose random secret
-	secret := fmt.Sprintf("%x", rand.Int63())
+	//nolint:gosec // cryptosource backs with crypto/rand
+	r := rand.New(cryptosource.New())
+	secret := fmt.Sprintf("%x", r.Int63())
 
 	token := os.Getenv(ghtokName)
 	if token == "" {
 		return nil, fmt.Errorf("GitHub API token missing - must set %s", ghtokName)
 	}
+
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	hc := &http.Client{Transport: &oauth2.Transport{Source: ts}}
 	client := github.NewClient(hc)
@@ -85,12 +90,12 @@ func New(repos []string, domain string, actions ...HookHandler) (*Responder, err
 
 func buildCallbackURL(domain string) string {
 	u := uuid.NewString()
-	var scheme string
+	scheme := "https://"
+
 	if tlsDisabled() {
 		scheme = "http://"
-	} else {
-		scheme = "https://"
 	}
+
 	return scheme + domain + "/gh-callback/" + u
 }
 
@@ -108,14 +113,17 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 		},
 	}
 
-	var unregFuncs []func()
+	unregFuncs := make([]func(), 0, len(r.repos))
+
 	for _, repo := range r.repos {
 		owner := repo.owner
 		repoName := repo.name
+
 		hook, resp, err := r.ghclient.Repositories.CreateHook(ctx, owner, repoName, inHook)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create hook: %w", err)
 		}
+
 		if resp.StatusCode > 299 {
 			return nil, fmt.Errorf("request failed with %s", resp.Status)
 		}
@@ -130,6 +138,7 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 		unregFuncs = append(unregFuncs, func() {
 			log := log.With().Int64("hook_id", id).Logger()
 			log.Info().Msg("Cleaning up webhook")
+
 			_, err := r.ghclient.Repositories.DeleteHook(ctx, owner, repoName, id)
 			if err != nil {
 				err = fmt.Errorf("failed to delete webhook: %w", err)
@@ -143,11 +152,12 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 			f()
 		}
 	}
+
 	return unregister, nil
 }
 
 // Listen for webhooks
-func (r *Responder) Listen(ctx context.Context) {
+func (r *Responder) Listen(_ context.Context) {
 	initMetrics()
 
 	// now listen for events
@@ -162,10 +172,12 @@ func (r *Responder) Listen(ctx context.Context) {
 	c = c.Append(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
 		eventType := github.WebHookType(r)
 		deliveryID := github.DeliveryID(r)
+
 		l := zerolog.DebugLevel
 		if status > 399 {
 			l = zerolog.WarnLevel
 		}
+
 		hlog.FromRequest(r).WithLevel(l).
 			Int("status", status).
 			Int("size", size).
@@ -185,13 +197,18 @@ func (r *Responder) Listen(ctx context.Context) {
 			),
 		))
 	http.Handle(getPath(r.callbackURL), c.Extend(instrumentHTTP("callback")).Then(r))
-	http.Handle("/", c.Extend(instrumentHTTP("default")).ThenFunc(denyHandler))
+	http.Handle("/", c.Extend(instrumentHTTP("default")).ThenFunc(http.NotFound))
 
 	if tlsDisabled() {
 		go func() {
 			log.Info().Int("port", certmagic.HTTPPort).Msg("Listening for webhook callbacks")
 			port := strconv.Itoa(certmagic.HTTPPort)
-			err := http.ListenAndServe(":"+port, nil)
+			srv := &http.Server{
+				Addr:              ":" + port,
+				ReadHeaderTimeout: 5 * time.Second,
+			}
+
+			err := srv.ListenAndServe()
 			log.Error().Err(err).Msg("")
 		}()
 	}
@@ -219,6 +236,7 @@ func (r *Responder) RegisterAndListen(ctx context.Context, events []string) erro
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
 	select {
 	case s := <-c:
 		log.Debug().
@@ -230,6 +248,7 @@ func (r *Responder) RegisterAndListen(ctx context.Context, events []string) erro
 			Err(err).
 			Msg("context cancelled")
 	}
+
 	return err
 }
 
@@ -238,6 +257,7 @@ func tlsDisabled() bool {
 	if err != nil {
 		return false
 	}
+
 	return disableTLS
 }
 
@@ -246,19 +266,23 @@ func getPath(u string) string {
 	if err != nil {
 		return u
 	}
+
 	if parsed.Path != "" {
 		return parsed.Path
 	}
+
 	return u
 }
 
 func (r *Responder) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	log := *hlog.FromRequest(req)
+
 	payload, err := github.ValidatePayload(req, []byte(r.secret))
 	if err != nil {
 		log.Error().Err(err).
 			Msg("invalid payload")
 		http.Error(resp, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -268,22 +292,28 @@ func (r *Responder) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		Str("eventType", eventType).
 		Str("deliveryID", deliveryID).Logger()
 	log.Info().Msg("Incoming request")
+
 	if eventType == "ping" {
 		event, err := github.ParseWebHook(eventType, payload)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to parse payload")
 			http.Error(resp, err.Error(), http.StatusBadRequest)
+
 			return
 		}
+
 		ping, ok := event.(*github.PingEvent)
 		if !ok {
 			http.Error(resp, fmt.Sprintf("wrong event type %T", event), http.StatusBadRequest)
+
 			return
 		}
+
 		_, err = resp.Write([]byte(*ping.Zen))
 		if err != nil {
 			log.Error().Err(err).Msg("failed to write response")
 		}
+
 		return
 	}
 
@@ -293,10 +323,6 @@ func (r *Responder) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	resp.WriteHeader(http.StatusNoContent)
-}
-
-func denyHandler(resp http.ResponseWriter, req *http.Request) {
-	resp.WriteHeader(http.StatusNotFound)
 }
 
 // HookHandler - A function that will be executed by the callback.

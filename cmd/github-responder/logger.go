@@ -13,6 +13,7 @@ func initLogger() {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	stdlogger := log.With().Bool("stdlog", true).Logger()
+
 	stdlog.SetFlags(0)
 	stdlog.SetOutput(stdlogger)
 
@@ -21,7 +22,7 @@ func initLogger() {
 
 		noLevelWriter := zerolog.ConsoleWriter{
 			Out:         os.Stderr,
-			FormatLevel: func(i interface{}) string { return "" },
+			FormatLevel: func(_ interface{}) string { return "" },
 		}
 		stdlogger = stdlogger.Output(noLevelWriter)
 		stdlog.SetOutput(stdlogger)
