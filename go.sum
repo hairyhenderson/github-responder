@@ -1,3 +1,5 @@
+filippo.io/mostly-harmless/cryptosource v0.0.0-20240504211311-d85a20aa7b6e h1:bomrmZwG6hJUfis0BD+eJE2ahsqiskNNYyEPd4/sDMk=
+filippo.io/mostly-harmless/cryptosource v0.0.0-20240504211311-d85a20aa7b6e/go.mod h1:hIhrS2FFqXOAlsXLtU3FZ3R5TMD47Mhh/8UQ+vBylQk=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/caddyserver/certmagic v0.21.2 h1:O18LtaYBGDooyy257cYePnhp4lPfz6TaJELil6Q1fDg=

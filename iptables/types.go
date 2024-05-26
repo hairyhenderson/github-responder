@@ -18,6 +18,7 @@ func (m *ghMeta) String() string {
 	s += "git: " + fmt.Sprintf("%s\n", m.Git)
 	s += "pages: " + fmt.Sprintf("%s\n", m.Pages)
 	s += "importer: " + fmt.Sprintf("%s\n", m.Importer)
+
 	return s
 }
 
@@ -32,6 +33,7 @@ func NewIPNet(s string) (*IPNet, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &IPNet{n}, nil
 }
 
@@ -42,6 +44,7 @@ func (i *IPNet) UnmarshalJSON(b []byte) error {
 	}
 
 	s := ""
+
 	err := json.Unmarshal(b, &s)
 	if err != nil {
 		return err
@@ -51,7 +54,9 @@ func (i *IPNet) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
+
 	*i = *n
+
 	return nil
 }
 
@@ -72,6 +77,7 @@ func (i *IPAddr) UnmarshalJSON(b []byte) error {
 	}
 
 	s := ""
+
 	err := json.Unmarshal(b, &s)
 	if err != nil {
 		return err
@@ -81,6 +87,7 @@ func (i *IPAddr) UnmarshalJSON(b []byte) error {
 	if ip == nil {
 		return fmt.Errorf("invalid IP format %v", ip)
 	}
+
 	*i = IPAddr{net.IPAddr{
 		IP:   ip,
 		Zone: "",

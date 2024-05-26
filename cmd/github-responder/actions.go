@@ -13,13 +13,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func defaultAction(ctx context.Context, eventType, deliveryID string, payload []byte) {
+func defaultAction(ctx context.Context, _, _ string, payload []byte) {
 	log := log.Ctx(ctx)
 	log.Info().
 		Int("size", len(payload)).
 		Msg("Received event")
 
 	j := make(map[string]interface{})
+
 	err := json.Unmarshal(payload, &j)
 	if err != nil {
 		log.Error().Err(err).Msg("Error parsing payload")
@@ -29,6 +30,7 @@ func defaultAction(ctx context.Context, eventType, deliveryID string, payload []
 	if err != nil {
 		log.Error().Err(err).Msg("Error unmarshaling payload")
 	}
+
 	fmt.Println(string(pretty))
 }
 
@@ -39,7 +41,7 @@ func execArgs(env []string, args ...string) responder.HookHandler {
 		cmdArgs := args[1:]
 		cmdArgs = append(cmdArgs, eventType, deliveryID)
 		input := bytes.NewBuffer(payload)
-		// nolint: gosec
+
 		c := exec.Command(name, cmdArgs...)
 		c.Env = resolveEnv(env)
 		log.Debug().
@@ -48,9 +50,11 @@ func execArgs(env []string, args ...string) responder.HookHandler {
 			Strs("args", cmdArgs).
 			Strs("env", keys(c.Env)).
 			Msg("Received event, executing command")
+
 		c.Stdin = input
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
+
 		err := c.Run()
 		if err != nil {
 			log.Error().Err(err).Msg(err.Error())
@@ -60,10 +64,12 @@ func execArgs(env []string, args ...string) responder.HookHandler {
 
 func keys(kvPairs []string) []string {
 	out := make([]string, len(kvPairs))
+
 	for i, kv := range kvPairs {
 		parts := strings.SplitN(kv, "=", 2)
 		out[i] = parts[0]
 	}
+
 	return out
 }
 
@@ -73,6 +79,7 @@ func resolveEnv(kvPairs []string) []string {
 	}
 
 	out := make([]string, len(kvPairs))
+
 	for i, kv := range kvPairs {
 		parts := strings.SplitN(kv, "=", 2)
 		if len(parts) == 1 {
@@ -81,5 +88,6 @@ func resolveEnv(kvPairs []string) []string {
 			out[i] = kv
 		}
 	}
+
 	return out
 }
