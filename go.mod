@@ -1,6 +1,8 @@
 module github.com/hairyhenderson/github-responder
 
-go 1.19
+go 1.21.0
+
+toolchain go1.22.3
 
 require (
 	github.com/caddyserver/certmagic v0.21.2
