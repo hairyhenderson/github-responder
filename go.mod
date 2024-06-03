@@ -4,7 +4,7 @@ go 1.22.3
 
 require (
 	filippo.io/mostly-harmless/cryptosource v0.0.0-20240504211311-d85a20aa7b6e
-	github.com/caddyserver/certmagic v0.21.2
+	github.com/caddyserver/certmagic v0.21.3
 	github.com/coreos/go-iptables v0.7.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.6.0
