@@ -11,7 +11,7 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/zerolog v1.33.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/term v0.21.0
