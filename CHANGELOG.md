@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/hairyhenderson/github-responder/compare/v0.1.1...v0.1.2) (2024-06-19)
+
+
+### Dependencies
+
+* **go:** Bump github.com/spf13/cobra from 1.8.0 to 1.8.1 ([#328](https://github.com/hairyhenderson/github-responder/issues/328)) ([f0a60f8](https://github.com/hairyhenderson/github-responder/commit/f0a60f84fdebf3ec31fae477ac2bc7e05b0f1d2d))
+
 ## [0.1.1](https://github.com/hairyhenderson/github-responder/compare/v0.1.0...v0.1.1) (2024-06-09)
 
 
