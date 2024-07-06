@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/hairyhenderson/github-responder/compare/v0.1.1...v0.1.2) (2024-07-06)
+
+
+### Dependencies
+
+* **go:** Bump github.com/spf13/cobra from 1.8.0 to 1.8.1 ([#328](https://github.com/hairyhenderson/github-responder/issues/328)) ([f0a60f8](https://github.com/hairyhenderson/github-responder/commit/f0a60f84fdebf3ec31fae477ac2bc7e05b0f1d2d))
+* **go:** Bump golang.org/x/term from 0.21.0 to 0.22.0 ([#330](https://github.com/hairyhenderson/github-responder/issues/330)) ([7b00f87](https://github.com/hairyhenderson/github-responder/commit/7b00f874402eda64ef393f865a54c7b37c491227))
+
 ## [0.1.1](https://github.com/hairyhenderson/github-responder/compare/v0.1.0...v0.1.1) (2024-06-09)
 
 
