@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.3](https://github.com/hairyhenderson/github-responder/compare/v0.1.2...v0.1.3) (2024-12-07)
+
+
+### Dependencies
+
+* **docker:** Bump alpine from 3.20 to 3.21 ([#350](https://github.com/hairyhenderson/github-responder/issues/350)) ([3ed85c3](https://github.com/hairyhenderson/github-responder/commit/3ed85c3b17c88f2313bba1220a9bfdb482ffa72b))
+* **go:** Bump github.com/stretchr/testify from 1.9.0 to 1.10.0 ([#348](https://github.com/hairyhenderson/github-responder/issues/348)) ([4182b15](https://github.com/hairyhenderson/github-responder/commit/4182b15910a02a36bf1ffdb553ea297d48634368))
+* **go:** Bump golang.org/x/oauth2 from 0.23.0 to 0.24.0 ([#346](https://github.com/hairyhenderson/github-responder/issues/346)) ([c4b2104](https://github.com/hairyhenderson/github-responder/commit/c4b2104f8d8a8c9a036a6c020585cd7ec11a3acf))
+* **go:** Bump golang.org/x/term from 0.25.0 to 0.26.0 ([#345](https://github.com/hairyhenderson/github-responder/issues/345)) ([5f2fab9](https://github.com/hairyhenderson/github-responder/commit/5f2fab97bfaee5c67fd881e555fd02ca6a9cd750))
+* **go:** Bump golang.org/x/term from 0.26.0 to 0.27.0 ([#349](https://github.com/hairyhenderson/github-responder/issues/349)) ([57adffd](https://github.com/hairyhenderson/github-responder/commit/57adffdd8664e0400a54af9d0975be67577d7f1b))
+
 ## [0.1.2](https://github.com/hairyhenderson/github-responder/compare/v0.1.1...v0.1.2) (2024-10-28)
 
 
