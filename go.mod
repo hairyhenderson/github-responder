@@ -1,6 +1,7 @@
 module github.com/hairyhenderson/github-responder
 
 go 1.22.3
+toolchain go1.23.7
 
 require (
 	filippo.io/mostly-harmless/cryptosource v0.0.0-20240504211311-d85a20aa7b6e
@@ -13,7 +14,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/oauth2 v0.28.0
 	golang.org/x/term v0.27.0
 )
 
