@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/hairyhenderson/github-responder/compare/v0.1.3...v0.1.4) (2025-04-21)
+
+
+### Dependencies
+
+* **docker:** Bump golang from 1.23-alpine to 1.24-alpine ([#358](https://github.com/hairyhenderson/github-responder/issues/358)) ([2a59534](https://github.com/hairyhenderson/github-responder/commit/2a595347a2301fc79c4289f2d495630c95c98111))
+
 ## [0.1.3](https://github.com/hairyhenderson/github-responder/compare/v0.1.2...v0.1.3) (2024-12-07)
 
 
