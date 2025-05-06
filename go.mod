@@ -1,6 +1,7 @@
 module github.com/hairyhenderson/github-responder
 
 go 1.22.3
+toolchain go1.24.1
 
 require (
 	filippo.io/mostly-harmless/cryptosource v0.0.0-20240504211311-d85a20aa7b6e
@@ -14,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/oauth2 v0.24.0
-	golang.org/x/term v0.27.0
+	golang.org/x/term v0.32.0
 )
 
 require (
@@ -45,7 +46,7 @@ require (
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
