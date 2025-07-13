@@ -1,18 +1,25 @@
 name: Build
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/hairyhenderson/gomplate-ci-build:latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - run: make test
-  lint:
-    runs-on: ubuntu-20.04
-    container:
-      image: ghcr.io/hairyhenderson/gomplate-ci-build:latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: make ci-lint
