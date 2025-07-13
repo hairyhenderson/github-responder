@@ -10,7 +10,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.22.0
-	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/oauth2 v0.30.0
@@ -26,8 +25,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/libdns/libdns v1.0.0-beta.1 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mholt/acmez/v3 v3.1.2 // indirect
 	github.com/miekg/dns v1.1.63 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -35,7 +32,6 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/rs/xid v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

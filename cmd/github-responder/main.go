@@ -5,13 +5,12 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/caddyserver/certmagic"
 	responder "github.com/hairyhenderson/github-responder"
 	"github.com/hairyhenderson/github-responder/version"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -39,17 +38,19 @@ func newCmd(cfg *config) *cobra.Command {
 			ctx := cmd.Context()
 
 			if cfg.verbose {
-				zerolog.SetGlobalLevel(zerolog.DebugLevel)
+				// Set debug level for verbose mode
+				slog.SetLogLoggerLevel(slog.LevelDebug)
 			}
 			if cfg.printVer {
 				printVersion(cmd.Name())
 
 				return nil
 			}
-			log.Debug().
-				Str("version", version.Version).
-				Str("commit", version.GitCommit).
-				Msg(cmd.CalledAs())
+
+			slog.Debug(cmd.CalledAs(),
+				"version", version.Version,
+				"commit", version.GitCommit)
+
 			cmd.SilenceErrors = true
 			cmd.SilenceUsage = true
 
@@ -57,7 +58,7 @@ func newCmd(cfg *config) *cobra.Command {
 			if len(args) > 0 {
 				action = execArgs(cfg.env, args...)
 			} else {
-				log.Info().Msg("No action command given, will perform default")
+				slog.Info("No action command given, will perform default")
 				action = defaultAction
 			}
 
@@ -118,7 +119,7 @@ func main() {
 	initFlags(&cfg, command)
 
 	if err := command.Execute(); err != nil {
-		log.Error().Err(err).Msg(command.Name() + " failed")
+		slog.Error(command.Name()+" failed", "error", err)
 		os.Exit(1)
 	}
 }
