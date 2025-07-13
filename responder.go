@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -19,9 +20,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/justinas/alice"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
@@ -129,20 +127,18 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 		}
 
 		id := hook.GetID()
-		log.Info().
-			Str("hook_url", hook.GetURL()).
-			Int64("hook_id", id).
-			Str("callback", r.callbackURL).
-			Msg("Registered WebHook")
+		slog.Info("Registered WebHook",
+			"hook_url", hook.GetURL(),
+			"hook_id", id,
+			"callback", r.callbackURL)
 
 		unregFuncs = append(unregFuncs, func() {
-			log := log.With().Int64("hook_id", id).Logger()
-			log.Info().Msg("Cleaning up webhook")
+			slog.Info("Cleaning up webhook", "hook_id", id)
 
 			_, err := r.ghclient.Repositories.DeleteHook(ctx, owner, repoName, id)
 			if err != nil {
 				err = fmt.Errorf("failed to delete webhook: %w", err)
-				log.Error().Err(err).Send()
+				slog.Error("", "error", err)
 			}
 		})
 	}
@@ -156,36 +152,66 @@ func (r *Responder) Register(ctx context.Context, events []string) (func(), erro
 	return unregister, nil
 }
 
+// slogHandler creates an HTTP middleware that adds structured logging to requests
+func slogHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Create a response writer that captures status code and size
+		lrw := &loggingResponseWriter{ResponseWriter: w, statusCode: 200}
+
+		// Call the next handler
+		next.ServeHTTP(lrw, r)
+
+		// Log the request
+		duration := time.Since(start)
+		eventType := github.WebHookType(r)
+		deliveryID := github.DeliveryID(r)
+
+		level := slog.LevelInfo
+		if lrw.statusCode > 399 {
+			level = slog.LevelWarn
+		}
+
+		slog.Log(r.Context(), level, fmt.Sprintf("%s %s - %d", r.Method, r.URL, lrw.statusCode),
+			"method", r.Method,
+			"url", r.URL.String(),
+			"remoteAddr", r.RemoteAddr,
+			"user_agent", r.Header.Get("User-Agent"),
+			"referer", r.Header.Get("Referer"),
+			"status", lrw.statusCode,
+			"size", lrw.size,
+			"duration", duration,
+			"eventType", eventType,
+			"deliveryID", deliveryID)
+	})
+}
+
+// loggingResponseWriter wraps http.ResponseWriter to capture status code and response size
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+	size       int
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
+}
+
+func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
+	size, err := lrw.ResponseWriter.Write(b)
+	lrw.size += size
+
+	return size, err
+}
+
 // Listen for webhooks
 func (r *Responder) Listen(_ context.Context) {
 	initMetrics()
 
 	// now listen for events
-	c := alice.New(hlog.NewHandler(log.Logger))
-	c = c.Append(
-		hlog.UserAgentHandler("user_agent"),
-		hlog.RefererHandler("referer"),
-		hlog.MethodHandler("method"),
-		hlog.URLHandler("url"),
-		hlog.RemoteAddrHandler("remoteAddr"),
-	)
-	c = c.Append(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-		eventType := github.WebHookType(r)
-		deliveryID := github.DeliveryID(r)
-
-		l := zerolog.DebugLevel
-		if status > 399 {
-			l = zerolog.WarnLevel
-		}
-
-		hlog.FromRequest(r).WithLevel(l).
-			Int("status", status).
-			Int("size", size).
-			Dur("duration", duration).
-			Str("eventType", eventType).
-			Str("deliveryID", deliveryID).
-			Msgf("%s %s - %d", r.Method, r.URL, status)
-	}))
+	c := alice.New(slogHandler)
 
 	http.Handle("/metrics", c.Append(filterByIP).
 		Then(
@@ -201,7 +227,7 @@ func (r *Responder) Listen(_ context.Context) {
 
 	if tlsDisabled() {
 		go func() {
-			log.Info().Int("port", certmagic.HTTPPort).Msg("Listening for webhook callbacks")
+			slog.Info("Listening for webhook callbacks", "port", certmagic.HTTPPort)
 			port := strconv.Itoa(certmagic.HTTPPort)
 			srv := &http.Server{
 				Addr:              ":" + port,
@@ -209,14 +235,14 @@ func (r *Responder) Listen(_ context.Context) {
 			}
 
 			err := srv.ListenAndServe()
-			log.Error().Err(err).Msg("")
+			slog.Error("", "error", err)
 		}()
 	}
 
 	go func() {
-		log.Info().Int("port", certmagic.HTTPSPort).Msg("Listening for webhook callbacks")
+		slog.Info("Listening for webhook callbacks", "port", certmagic.HTTPSPort)
 		err := certmagic.HTTPS([]string{r.domain}, nil)
-		log.Error().Err(err).Msg("listening with certmagic")
+		slog.Error("listening with certmagic", "error", err)
 	}()
 }
 
@@ -239,14 +265,10 @@ func (r *Responder) RegisterAndListen(ctx context.Context, events []string) erro
 
 	select {
 	case s := <-c:
-		log.Debug().
-			Str("signal", s.String()).
-			Msg("shutting down gracefully...")
+		slog.Debug("shutting down gracefully...", "signal", s.String())
 	case <-ctx.Done():
 		err = ctx.Err()
-		log.Error().
-			Err(err).
-			Msg("context cancelled")
+		slog.Error("context cancelled", "error", err)
 	}
 
 	return err
@@ -275,12 +297,11 @@ func getPath(u string) string {
 }
 
 func (r *Responder) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	log := *hlog.FromRequest(req)
+	ctx := req.Context()
 
 	payload, err := github.ValidatePayload(req, []byte(r.secret))
 	if err != nil {
-		log.Error().Err(err).
-			Msg("invalid payload")
+		slog.ErrorContext(ctx, "invalid payload", "error", err)
 		http.Error(resp, err.Error(), http.StatusBadRequest)
 
 		return
@@ -288,15 +309,12 @@ func (r *Responder) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 	eventType := github.WebHookType(req)
 	deliveryID := github.DeliveryID(req)
-	log = log.With().
-		Str("eventType", eventType).
-		Str("deliveryID", deliveryID).Logger()
-	log.Info().Msg("Incoming request")
+	slog.InfoContext(ctx, "Incoming request", "eventType", eventType, "deliveryID", deliveryID)
 
 	if eventType == "ping" {
 		event, err := github.ParseWebHook(eventType, payload)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to parse payload")
+			slog.ErrorContext(ctx, "failed to parse payload", "error", err)
 			http.Error(resp, err.Error(), http.StatusBadRequest)
 
 			return
@@ -311,13 +329,12 @@ func (r *Responder) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 		_, err = resp.Write([]byte(*ping.Zen))
 		if err != nil {
-			log.Error().Err(err).Msg("failed to write response")
+			slog.ErrorContext(ctx, "failed to write response", "error", err)
 		}
 
 		return
 	}
 
-	ctx := log.WithContext(req.Context())
 	for _, a := range r.actions {
 		go a(ctx, eventType, deliveryID, payload)
 	}

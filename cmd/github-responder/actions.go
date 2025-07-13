@@ -5,30 +5,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
 
 	responder "github.com/hairyhenderson/github-responder"
-	"github.com/rs/zerolog/log"
 )
 
 func defaultAction(ctx context.Context, _, _ string, payload []byte) {
-	log := log.Ctx(ctx)
-	log.Info().
-		Int("size", len(payload)).
-		Msg("Received event")
+	slog.InfoContext(ctx, "Received event", "size", len(payload))
 
 	j := make(map[string]interface{})
 
 	err := json.Unmarshal(payload, &j)
 	if err != nil {
-		log.Error().Err(err).Msg("Error parsing payload")
+		slog.ErrorContext(ctx, "Error parsing payload", "error", err)
 	}
 
 	pretty, err := json.MarshalIndent(j, "", "  ")
 	if err != nil {
-		log.Error().Err(err).Msg("Error unmarshaling payload")
+		slog.ErrorContext(ctx, "Error unmarshaling payload", "error", err)
 	}
 
 	fmt.Println(string(pretty))
@@ -36,7 +33,6 @@ func defaultAction(ctx context.Context, _, _ string, payload []byte) {
 
 func execArgs(env []string, args ...string) responder.HookHandler {
 	return func(ctx context.Context, eventType, deliveryID string, payload []byte) {
-		log := log.Ctx(ctx)
 		name := args[0]
 		cmdArgs := args[1:]
 		cmdArgs = append(cmdArgs, eventType, deliveryID)
@@ -44,12 +40,11 @@ func execArgs(env []string, args ...string) responder.HookHandler {
 
 		c := exec.Command(name, cmdArgs...)
 		c.Env = resolveEnv(env)
-		log.Debug().
-			Int("size", len(payload)).
-			Str("command", name).
-			Strs("args", cmdArgs).
-			Strs("env", keys(c.Env)).
-			Msg("Received event, executing command")
+		slog.DebugContext(ctx, "Received event, executing command",
+			"size", len(payload),
+			"command", name,
+			"args", cmdArgs,
+			"env", keys(c.Env))
 
 		c.Stdin = input
 		c.Stderr = os.Stderr
@@ -57,7 +52,7 @@ func execArgs(env []string, args ...string) responder.HookHandler {
 
 		err := c.Run()
 		if err != nil {
-			log.Error().Err(err).Msg(err.Error())
+			slog.ErrorContext(ctx, err.Error(), "error", err)
 		}
 	}
 }

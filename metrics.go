@@ -2,6 +2,7 @@ package responder
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"github.com/justinas/alice"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog/log"
 )
 
 //nolint:gochecknoglobals
@@ -113,7 +113,7 @@ func filterByIP(next http.Handler) http.Handler {
 			}
 		}
 
-		log.Warn().Str("remoteAddr", req.RemoteAddr).Msg("bad remoteAddr - rejecting")
+		slog.Warn("bad remoteAddr - rejecting", "remoteAddr", req.RemoteAddr)
 		resp.WriteHeader(http.StatusNotFound)
 	})
 }
@@ -129,7 +129,8 @@ func isAllowed(ip net.IP) bool {
 
 	_, cidr, err := net.ParseCIDR("10.0.0.0/8")
 	if err != nil {
-		log.Fatal().Err(err).Msg("couldn't parse the CIDR")
+		slog.Error("couldn't parse the CIDR", "error", err)
+		panic(err)
 	}
 
 	return cidr.Contains(ip)
