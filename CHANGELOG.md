@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.4](https://github.com/hairyhenderson/github-responder/compare/v0.1.3...v0.1.4) (2025-07-13)
+
+
+### Dependencies
+
+* **actions:** Bump actions/create-github-app-token from 1 to 2 ([#374](https://github.com/hairyhenderson/github-responder/issues/374)) ([55b3d7f](https://github.com/hairyhenderson/github-responder/commit/55b3d7f942cc36ddc8b30beca3899b203f979707))
+* **docker:** Bump alpine from 3.21 to 3.22 ([#377](https://github.com/hairyhenderson/github-responder/issues/377)) ([82881ca](https://github.com/hairyhenderson/github-responder/commit/82881cae72079abf8f3ca8c960e7c5d8396c1247))
+* **docker:** Bump golang from 1.23-alpine to 1.24-alpine ([#358](https://github.com/hairyhenderson/github-responder/issues/358)) ([2a59534](https://github.com/hairyhenderson/github-responder/commit/2a595347a2301fc79c4289f2d495630c95c98111))
+* **go:** Bump github.com/caddyserver/certmagic from 0.21.4 to 0.23.0 ([#370](https://github.com/hairyhenderson/github-responder/issues/370)) ([a1e2ec5](https://github.com/hairyhenderson/github-responder/commit/a1e2ec5fd0ae78ae96f1f473c3d18a704ca8f705))
+* **go:** Bump github.com/prometheus/client_golang from 1.20.5 to 1.22.0 ([#371](https://github.com/hairyhenderson/github-responder/issues/371)) ([2e222c4](https://github.com/hairyhenderson/github-responder/commit/2e222c4b4a5291899ad1e697d8a3ee3c45c2aa3c))
+* **go:** Bump github.com/spf13/cobra from 1.8.1 to 1.9.1 ([#359](https://github.com/hairyhenderson/github-responder/issues/359)) ([9577846](https://github.com/hairyhenderson/github-responder/commit/957784628d6798e7c46b962cb3ae3c5a39e223dc))
+* **go:** Bump golang.org/x/net from 0.29.0 to 0.38.0 ([#380](https://github.com/hairyhenderson/github-responder/issues/380)) ([d0fa877](https://github.com/hairyhenderson/github-responder/commit/d0fa87702e39433277cbb2f684b33ca692e19ca0))
+* **go:** Bump golang.org/x/oauth2 from 0.24.0 to 0.30.0 ([#375](https://github.com/hairyhenderson/github-responder/issues/375)) ([fe09779](https://github.com/hairyhenderson/github-responder/commit/fe097795075f0d1a22f9a18bfcd56bf878a8b6a8))
+* **go:** Bump golang.org/x/term from 0.27.0 to 0.33.0 ([#378](https://github.com/hairyhenderson/github-responder/issues/378)) ([2cec7a9](https://github.com/hairyhenderson/github-responder/commit/2cec7a9c22e6009f4f42e1703071dd9c5789b6fd))
+
 ## [0.1.3](https://github.com/hairyhenderson/github-responder/compare/v0.1.2...v0.1.3) (2024-12-07)
 
 
