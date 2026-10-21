@@ -38,7 +38,9 @@ func execArgs(env []string, args ...string) responder.HookHandler {
 		cmdArgs = append(cmdArgs, eventType, deliveryID)
 		input := bytes.NewBuffer(payload)
 
-		c := exec.Command(name, cmdArgs...)
+		// actions run after the response is sent, when the request context is
+		// already cancelled, so don't let that cancellation kill the command
+		c := exec.CommandContext(context.WithoutCancel(ctx), name, cmdArgs...)
 		c.Env = resolveEnv(env)
 		slog.DebugContext(ctx, "Received event, executing command",
 			"size", len(payload),
