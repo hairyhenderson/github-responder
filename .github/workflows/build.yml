@@ -17,9 +17,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hairyhenderson/gomplate-ci-build:latest
+      image: ghcr.io/hairyhenderson/gomplate-ci-build:latest@sha256:c7a529cf5283bc096759b1e1ad02d72539cd3c4ee5dc0131678d16be57d98eac
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
       - run: make test
