@@ -1,4 +1,4 @@
-FROM golang:1.27.3-alpine AS build
+FROM golang:1.27.3-alpine@sha256:f2c872bcee949b7be9c490efd02b48a8a2fbf947cdf533f1c58525ec9d8170fd AS build
 
 RUN apk add --no-cache make git
 
@@ -39,7 +39,7 @@ LABEL org.opencontainers.image.revision=$VCS_REF \
 
 ENTRYPOINT [ "/github-responder" ]
 
-FROM alpine:3.22 AS alpine
+FROM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 AS alpine
 
 ARG OS=linux
 ARG ARCH=amd64
