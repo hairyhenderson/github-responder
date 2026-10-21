@@ -67,7 +67,7 @@ var (
 )
 
 func initMetrics() {
-	o := []prometheus.Collector{}
+	o := make([]prometheus.Collector, 0, len(observers))
 	for _, m := range observers {
 		o = append(o, m)
 	}
