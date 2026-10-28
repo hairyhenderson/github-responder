@@ -17,7 +17,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/hairyhenderson/gomplate-ci-build:latest@sha256:9e52be40a654972d9c80c8ff145638c4b0c31311be0d6a68f496ee7d02bd4501
+      image: ghcr.io/hairyhenderson/gomplate-ci-build:latest@sha256:8d4961cfb912801865d900fdb047f66de7aded825de44dcf7846e4850b02a4a1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
