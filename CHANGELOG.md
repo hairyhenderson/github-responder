@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.5](https://github.com/hairyhenderson/github-responder/compare/v0.1.4...v0.1.5) (2026-11-13)
+
+
+### Bug Fixes
+
+* **gomod:** update filippo.io/mostly-harmless/cryptosource digest to c56eb4c ([#455](https://github.com/hairyhenderson/github-responder/issues/455)) ([a4fb4bd](https://github.com/hairyhenderson/github-responder/commit/a4fb4bd8ab93b7fe9864fbf8291c522313d41a98))
+* **gomod:** update filippo.io/mostly-harmless/cryptosource digest to dfa6dee ([#467](https://github.com/hairyhenderson/github-responder/issues/467)) ([e01398f](https://github.com/hairyhenderson/github-responder/commit/e01398f8b82725133bf20860e792ccce36fd3091))
+* **gomod:** update module github.com/caddyserver/certmagic to v0.25.6 ([#433](https://github.com/hairyhenderson/github-responder/issues/433)) ([d69a555](https://github.com/hairyhenderson/github-responder/commit/d69a55558eabd004f668cea2f13fcbe7814c78ff))
+* **gomod:** update module github.com/prometheus/client_golang to v1.25.0 ([#436](https://github.com/hairyhenderson/github-responder/issues/436)) ([bee0272](https://github.com/hairyhenderson/github-responder/commit/bee027264ec733ce5956fcca31ff2246a742f43d))
+* **gomod:** update module github.com/spf13/cobra to v1.10.2 ([#438](https://github.com/hairyhenderson/github-responder/issues/438)) ([9229e8b](https://github.com/hairyhenderson/github-responder/commit/9229e8bfbb98e29dea15e29ab9e23d036e45ee86))
+* **gomod:** update module golang.org/x/oauth2 to v0.38.0 ([#472](https://github.com/hairyhenderson/github-responder/issues/472)) ([69e4701](https://github.com/hairyhenderson/github-responder/commit/69e4701688dbed1bb883ce7b91aaca15b0498364))
+* **gomod:** update module golang.org/x/term to v0.47.0 ([#440](https://github.com/hairyhenderson/github-responder/issues/440)) ([0d408c6](https://github.com/hairyhenderson/github-responder/commit/0d408c62628fecb3d93ab3e4dcd6fd4d7a3ae714))
+
 ## [0.1.4](https://github.com/hairyhenderson/github-responder/compare/v0.1.3...v0.1.4) (2026-10-21)
 
 
