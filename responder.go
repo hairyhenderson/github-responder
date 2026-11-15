@@ -16,11 +16,10 @@ import (
 
 	"filippo.io/mostly-harmless/cryptosource"
 	"github.com/caddyserver/certmagic"
-	"github.com/google/go-github/v35/github"
+	"github.com/google/go-github/v93/github"
 	"github.com/google/uuid"
 	"github.com/justinas/alice"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -72,9 +71,10 @@ func New(repos []string, domain string, actions ...HookHandler) (*Responder, err
 		return nil, fmt.Errorf("GitHub API token missing - must set %s", ghtokName)
 	}
 
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	hc := &http.Client{Transport: &oauth2.Transport{Source: ts}}
-	client := github.NewClient(hc)
+	client, err := github.NewClient(github.WithAuthToken(token))
+	if err != nil {
+		return nil, fmt.Errorf("creating GitHub client: %w", err)
+	}
 
 	return &Responder{
 		ghclient:    client,
@@ -104,10 +104,10 @@ func buildCallbackURL(domain string) string {
 func (r *Responder) Register(ctx context.Context, events []string) (func(), error) {
 	inHook := &github.Hook{
 		Events: events,
-		Config: map[string]interface{}{
-			"url":          r.callbackURL,
-			"content_type": "json",
-			"secret":       r.secret,
+		Config: &github.HookConfig{
+			URL:         new(r.callbackURL),
+			ContentType: new("json"),
+			Secret:      new(r.secret),
 		},
 	}
 
