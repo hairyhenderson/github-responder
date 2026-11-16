@@ -1,6 +1,8 @@
 module github.com/hairyhenderson/github-responder
 
-go 1.27.3
+go 1.27.0
+
+toolchain go1.27.4
 
 require (
 	filippo.io/mostly-harmless/cryptosource v0.0.0-20261103164203-dfa6dee15068
